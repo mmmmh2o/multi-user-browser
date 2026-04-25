@@ -3,63 +3,76 @@ const path = require('path');
 
 /**
  * Preload 脚本 - 通过 contextBridge 安全暴露 API 给渲染进程
- *
- * 安全原则：
- * - 使用 contextBridge 而非 nodeIntegration
- * - 只暴露必要的 IPC 通道
- * - 不暴露 ipcRenderer 原始对象
  */
 
-// 暴露 webview preload 路径给渲染进程
-// 渲染进程用它来设置 webview 的 preload 属性
-const webviewPreloadPath = path.join(__dirname, '../main/preload/webview-preload.js');
-contextBridge.exposeInMainWorld('__MUB_PRELOAD_PATH__', webviewPreloadPath);
+// 暴露 webview preload 路径
+try {
+  const webviewPreloadPath = path.join(__dirname, '../main/preload/webview-preload.js');
+  contextBridge.exposeInMainWorld('__MUB_PRELOAD_PATH__', webviewPreloadPath);
+} catch (e) {
+  console.error('设置 webview preload 路径失败:', e);
+  contextBridge.exposeInMainWorld('__MUB_PRELOAD_PATH__', '');
+}
+
+// 安全包装 invoke
+function safeInvoke(channel, ...args) {
+  return ipcRenderer.invoke(channel, ...args).catch((err) => {
+    console.error(`IPC [${channel}] 调用失败:`, err);
+    return null;
+  });
+}
 
 contextBridge.exposeInMainWorld('electronAPI', {
   // ========== 用户管理 ==========
-  getUsers: () => ipcRenderer.invoke('get-users'),
-  saveUser: (user) => ipcRenderer.invoke('save-user', user),
-  deleteUser: (id) => ipcRenderer.invoke('delete-user', id),
+  getUsers: () => safeInvoke('get-users'),
+  saveUser: (user) => safeInvoke('save-user', user),
+  deleteUser: (id) => safeInvoke('delete-user', id),
 
   // ========== 会话管理 ==========
-  createSession: (userId) => ipcRenderer.invoke('create-user-session', userId),
-  getSession: (userId) => ipcRenderer.invoke('get-user-session', userId),
-  activateUser: (userId) => ipcRenderer.invoke('activate-user', userId),
-  deactivateUser: (userId) => ipcRenderer.invoke('deactivate-user', userId),
-  getUserActivities: () => ipcRenderer.invoke('get-user-activities'),
+  createSession: (userId) => safeInvoke('create-user-session', userId),
+  getSession: (userId) => safeInvoke('get-user-session', userId),
+  activateUser: (userId) => safeInvoke('activate-user', userId),
+  deactivateUser: (userId) => safeInvoke('deactivate-user', userId),
+  getUserActivities: () => safeInvoke('get-user-activities'),
 
   // ========== 文件管理 ==========
-  getFiles: (dirPath) => ipcRenderer.invoke('get-files', dirPath),
-  createFile: (filePath, content) => ipcRenderer.invoke('create-file', filePath, content),
-  createDirectory: (dirPath) => ipcRenderer.invoke('create-directory', dirPath),
-  deleteFile: (filePath) => ipcRenderer.invoke('delete-file', filePath),
-  renameFile: (oldPath, newPath) => ipcRenderer.invoke('rename-file', oldPath, newPath),
-  copyFile: (sourcePath, destPath) => ipcRenderer.invoke('copy-file', sourcePath, destPath),
-  moveFile: (sourcePath, destPath) => ipcRenderer.invoke('move-file', sourcePath, destPath),
-  readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),
-  writeFile: (filePath, content) => ipcRenderer.invoke('write-file', filePath, content),
+  getFiles: (dirPath) => safeInvoke('get-files', dirPath),
+  createFile: (filePath, content) => safeInvoke('create-file', filePath, content),
+  createDirectory: (dirPath) => safeInvoke('create-directory', dirPath),
+  deleteFile: (filePath) => safeInvoke('delete-file', filePath),
+  renameFile: (oldPath, newPath) => safeInvoke('rename-file', oldPath, newPath),
+  copyFile: (sourcePath, destPath) => safeInvoke('copy-file', sourcePath, destPath),
+  moveFile: (sourcePath, destPath) => safeInvoke('move-file', sourcePath, destPath),
+  readFile: (filePath) => safeInvoke('read-file', filePath),
+  writeFile: (filePath, content) => safeInvoke('write-file', filePath, content),
 
   // ========== 下载管理 ==========
-  addDownload: (url, savePath) => ipcRenderer.invoke('add-download', url, savePath),
-  pauseDownload: (taskId) => ipcRenderer.invoke('pause-download', taskId),
-  resumeDownload: (taskId) => ipcRenderer.invoke('resume-download', taskId),
-  cancelDownload: (taskId) => ipcRenderer.invoke('cancel-download', taskId),
-  getDownloads: () => ipcRenderer.invoke('get-downloads'),
+  addDownload: (url, savePath) => safeInvoke('add-download', url, savePath),
+  pauseDownload: (taskId) => safeInvoke('pause-download', taskId),
+  resumeDownload: (taskId) => safeInvoke('resume-download', taskId),
+  cancelDownload: (taskId) => safeInvoke('cancel-download', taskId),
+  getDownloads: () => safeInvoke('get-downloads'),
 
   // ========== 书签管理 ==========
-  getBookmarks: () => ipcRenderer.invoke('get-bookmarks'),
-  saveBookmark: (bookmark) => ipcRenderer.invoke('save-bookmark', bookmark),
-  deleteBookmark: (id) => ipcRenderer.invoke('delete-bookmark', id),
+  getBookmarks: () => safeInvoke('get-bookmarks'),
+  saveBookmark: (bookmark) => safeInvoke('save-bookmark', bookmark),
+  deleteBookmark: (id) => safeInvoke('delete-bookmark', id),
 
   // ========== 历史记录 ==========
-  getHistory: () => ipcRenderer.invoke('get-history'),
-  addHistory: (entry) => ipcRenderer.invoke('add-history', entry),
-  clearHistory: () => ipcRenderer.invoke('clear-history'),
+  getHistory: () => safeInvoke('get-history'),
+  addHistory: (entry) => safeInvoke('add-history', entry),
+  clearHistory: () => safeInvoke('clear-history'),
+  deleteHistory: (id) => safeInvoke('delete-history', id),
 
   // ========== 脚本管理 ==========
-  getScripts: () => ipcRenderer.invoke('get-scripts'),
-  saveScript: (script) => ipcRenderer.invoke('save-script', script),
-  deleteScript: (id) => ipcRenderer.invoke('delete-script', id),
+  getScripts: () => safeInvoke('get-scripts'),
+  saveScript: (script) => safeInvoke('save-script', script),
+  deleteScript: (id) => safeInvoke('delete-script', id),
+
+  // ========== 设置管理 ==========
+  getSettings: () => safeInvoke('get-settings'),
+  saveSettings: (settings) => safeInvoke('save-settings', settings),
+  resetSettings: () => safeInvoke('reset-settings'),
 
   // ========== 事件监听（主进程 → 渲染进程） ==========
   onDownloadProgress: (callback) => {
@@ -71,11 +84,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onNotification: (callback) => {
     ipcRenderer.on('notification', (event, data) => callback(data));
   },
-
-  // ========== 设置管理 ==========
-  getSettings: () => ipcRenderer.invoke('get-settings'),
-  saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
-  resetSettings: () => ipcRenderer.invoke('reset-settings'),
 
   // ========== 移除监听器 ==========
   removeAllListeners: (channel) => {
