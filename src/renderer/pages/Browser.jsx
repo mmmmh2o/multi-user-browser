@@ -26,6 +26,7 @@ import {
   CloseCircleOutlined,
   CopyOutlined,
 } from '@ant-design/icons';
+import { safeCall } from '../utils/ipcHelper';
 
 const HOME_URL = 'about:blank';
 const NEW_TAB_URL = 'about:blank';
@@ -261,6 +262,11 @@ export default function Browser() {
       });
 
       webview.addEventListener('did-navigate', (e) => {
+        // 记录历史
+        safeCall(() => window.electronAPI.addHistory({
+          url: e.url,
+          title: webview.getTitle() || e.url,
+        }));
         setTabs((prev) =>
           prev.map((t) =>
             t.key === key

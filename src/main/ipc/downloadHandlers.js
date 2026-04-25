@@ -195,6 +195,7 @@ function startDownload(taskId, url, savePath, webContents, startByte = 0) {
       // 更新进度
       const progress = fileSize > 0 ? Math.round((downloadedSize / fileSize) * 100) : 0;
       updateTaskField(taskId, 'downloadedSize', downloadedSize);
+      updateTaskField(taskId, 'progress', progress);
 
       // 推送进度到渲染进程
       if (webContents && !webContents.isDestroyed()) {

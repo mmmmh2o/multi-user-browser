@@ -19,7 +19,18 @@ function registerScriptHandlers() {
   // 获取所有脚本
   ipcMain.handle('get-scripts', async () => {
     try {
-      return getStore().get('scripts', []);
+      const scripts = getStore().get('scripts', []);
+      // 迁移旧字段 url → match
+      let migrated = false;
+      for (const s of scripts) {
+        if (s.url && !s.match) {
+          s.match = s.url;
+          delete s.url;
+          migrated = true;
+        }
+      }
+      if (migrated) getStore().set('scripts', scripts);
+      return scripts;
     } catch (error) {
       log.error('获取脚本失败:', error);
       return [];
