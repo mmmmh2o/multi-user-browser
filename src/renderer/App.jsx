@@ -13,7 +13,7 @@ export default function App() {
     <HashRouter>
       <Routes>
         <Route path="/" element={<MainLayout />}>
-          <Route index element={<Navigate to="/users" replace />} />
+          <Route index element={<Navigate to="/browser" replace />} />
           <Route path="users" element={<UserManager />} />
           <Route path="browser" element={<Browser />} />
           <Route path="files" element={<FileManager />} />

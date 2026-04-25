@@ -37,6 +37,7 @@
     "@reduxjs/toolkit": "^2.0.0",
     "react-redux": "^9.0.0",
     "antd": "^5.0.0",
+    "@ant-design/icons": "^5.0.0",
     "axios": "^1.6.0"
   },
   "devDependencies": {
