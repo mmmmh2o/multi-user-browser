@@ -1,22 +1,18 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const log = require('electron-log');
+const { registerAllHandlers } = require('./ipc');
 
 // 配置日志
-log.transports.file.resolvePath = () => path.join(app.getPath('userData'), 'logs/main.log');
+try {
+  log.transports.file.resolvePath = () => path.join(app.getPath('userData'), 'logs/main.log');
+} catch (e) {
+  // app 未就绪时忽略
+}
 log.info('应用启动');
 
 // 窗口引用
 let mainWindow = null;
-
-// IPC Handler 注册
-const { registerUserHandlers } = require('./ipc/userHandlers');
-const { registerSessionHandlers } = require('./ipc/sessionHandlers');
-const { registerFileHandlers } = require('./ipc/fileHandlers');
-const { registerDownloadHandlers } = require('./ipc/downloadHandlers');
-const { registerBookmarkHandlers } = require('./ipc/bookmarkHandlers');
-const { registerHistoryHandlers } = require('./ipc/historyHandlers');
-const { registerScriptHandlers } = require('./ipc/scriptHandlers');
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -48,19 +44,10 @@ function createWindow() {
   log.info('主窗口已创建');
 }
 
-function registerAllHandlers() {
-  registerUserHandlers();
-  registerSessionHandlers();
-  registerFileHandlers();
-  registerDownloadHandlers();
-  registerBookmarkHandlers();
-  registerHistoryHandlers();
-  registerScriptHandlers();
-  log.info('所有 IPC Handler 已注册');
-}
-
 app.whenReady().then(() => {
   registerAllHandlers();
+  log.info('所有 IPC Handler 已注册');
+
   createWindow();
 
   app.on('activate', () => {
@@ -80,5 +67,4 @@ app.on('before-quit', () => {
   log.info('应用即将退出');
 });
 
-// 导出给测试用
-module.exports = { createWindow, mainWindow };
+module.exports = { createWindow };
