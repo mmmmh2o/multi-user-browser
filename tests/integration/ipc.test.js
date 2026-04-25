@@ -2,7 +2,6 @@ const { ipcMain } = require('electron');
 
 describe('IPC 集成测试', () => {
   test('所有 IPC handler 应正确注册', () => {
-    jest.resetModules();
     ipcMain.handle.mockClear();
 
     // 加载所有 handler

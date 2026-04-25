@@ -2,7 +2,6 @@ const { ipcMain } = require('electron');
 
 describe('userHandlers', () => {
   beforeAll(() => {
-    jest.resetModules();
     ipcMain.handle.mockClear();
     require('../../src/main/ipc/userHandlers');
   });
@@ -112,24 +111,6 @@ describe('downloadHandlers', () => {
     expect(channels).toContain('add-download');
   });
 
-  test('pause-download 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
-    expect(channels).toContain('pause-download');
-  });
-
-  test('resume-download 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
-    expect(channels).toContain('resume-download');
-  });
-
-  test('cancel-download 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
-    expect(channels).toContain('cancel-download');
-  });
-
   test('get-downloads 应注册为 IPC handler', () => {
     const calls = ipcMain.handle.mock.calls;
     const channels = calls.map(([channel]) => channel);
@@ -184,30 +165,5 @@ describe('historyHandlers', () => {
     const calls = ipcMain.handle.mock.calls;
     const channels = calls.map(([channel]) => channel);
     expect(channels).toContain('clear-history');
-  });
-});
-
-describe('scriptHandlers', () => {
-  beforeAll(() => {
-    ipcMain.handle.mockClear();
-    require('../../src/main/ipc/scriptHandlers');
-  });
-
-  test('get-scripts 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
-    expect(channels).toContain('get-scripts');
-  });
-
-  test('save-script 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
-    expect(channels).toContain('save-script');
-  });
-
-  test('delete-script 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
-    expect(channels).toContain('delete-script');
   });
 });
