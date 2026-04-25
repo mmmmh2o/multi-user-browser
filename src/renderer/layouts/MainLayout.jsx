@@ -8,17 +8,24 @@ import {
   DownloadOutlined,
   CodeOutlined,
   SettingOutlined,
+  StarOutlined,
+  HistoryOutlined,
 } from '@ant-design/icons';
 import NotificationBell from '../components/NotificationBell';
 
 const { Sider, Content, Header } = Layout;
 
 const menuItems = [
-  { key: '/users', icon: <UserOutlined />, label: '用户管理' },
   { key: '/browser', icon: <GlobalOutlined />, label: '浏览器' },
+  { key: '/users', icon: <UserOutlined />, label: '用户管理' },
+  { type: 'divider' },
+  { key: '/bookmarks', icon: <StarOutlined />, label: '书签' },
+  { key: '/history', icon: <HistoryOutlined />, label: '历史' },
+  { type: 'divider' },
   { key: '/files', icon: <FolderOutlined />, label: '文件管理' },
   { key: '/downloads', icon: <DownloadOutlined />, label: '下载管理' },
   { key: '/scripts', icon: <CodeOutlined />, label: '脚本管理' },
+  { type: 'divider' },
   { key: '/settings', icon: <SettingOutlined />, label: '设置' },
 ];
 
@@ -26,6 +33,9 @@ export default function MainLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { token } = theme.useToken();
+
+  const currentLabel =
+    menuItems.find((item) => item.key === location.pathname)?.label || '';
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -46,7 +56,9 @@ export default function MainLayout() {
             fontSize: 18,
             color: token.colorPrimary,
             borderBottom: `1px solid ${token.colorBorderSecondary}`,
+            cursor: 'pointer',
           }}
+          onClick={() => navigate('/browser')}
         >
           🌐 Multi-User Browser
         </div>
@@ -70,7 +82,7 @@ export default function MainLayout() {
           }}
         >
           <h2 style={{ margin: 0, fontSize: 16, fontWeight: 500 }}>
-            {menuItems.find((item) => item.key === location.pathname)?.label || ''}
+            {currentLabel}
           </h2>
           <NotificationBell />
         </Header>

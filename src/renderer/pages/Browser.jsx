@@ -53,6 +53,16 @@ export default function Browser() {
   useEffect(() => {
     loadCurrentUser();
     addNewTab();
+
+    // 监听来自书签/历史页面的导航事件
+    const handleNavigateEvent = (e) => {
+      const { url } = e.detail || {};
+      if (url) {
+        addNewTab(url);
+      }
+    };
+    window.addEventListener('mub-navigate', handleNavigateEvent);
+    return () => window.removeEventListener('mub-navigate', handleNavigateEvent);
   }, []);
 
   const loadCurrentUser = async () => {
@@ -590,7 +600,8 @@ export default function Browser() {
                   partition={getPartition()}
                   style={{ width: '100%', height: '100%', flex: 1 }}
                   allowpopups="true"
-                  webpreferences="contextIsolation=yes,nodeIntegration=no"
+                  preload={`file://${window.__MUB_PRELOAD_PATH__ || ''}`}
+                  webpreferences="contextIsolation=yes,nodeIntegration=no,sandbox=no"
                 />
               )}
             </div>

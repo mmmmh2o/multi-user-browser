@@ -58,6 +58,17 @@ function registerScriptHandlers() {
     }
   });
 
+  // 获取已启用的脚本（供 webview preload 注入用）
+  ipcMain.handle('get-enabled-scripts', async () => {
+    try {
+      const scripts = store.get('scripts', []);
+      return scripts.filter((s) => s.enabled);
+    } catch (error) {
+      log.error('获取启用脚本失败:', error);
+      return [];
+    }
+  });
+
   // 删除脚本
   ipcMain.handle('delete-script', async (event, scriptId) => {
     try {

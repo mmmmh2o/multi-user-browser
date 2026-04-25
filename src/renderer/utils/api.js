@@ -78,6 +78,11 @@ export const onDownloadCompleted = (callback) => api?.onDownloadCompleted(callba
 export const onNotification = (callback) => api?.onNotification(callback);
 export const removeAllListeners = (channel) => api?.removeAllListeners(channel);
 
+// ========== 设置管理 ==========
+export const getSettings = () => call('getSettings');
+export const saveSettings = (settings) => call('saveSettings', settings);
+export const resetSettings = () => call('resetSettings');
+
 export default {
   getUsers, saveUser, deleteUser,
   createSession, getSession, activateUser, deactivateUser, getUserActivities,
@@ -86,5 +91,6 @@ export default {
   getBookmarks, saveBookmark, deleteBookmark,
   getHistory, addHistory, clearHistory,
   getScripts, saveScript, deleteScript,
+  getSettings, saveSettings, resetSettings,
   onDownloadProgress, onDownloadCompleted, onNotification, removeAllListeners,
 };

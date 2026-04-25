@@ -6,6 +6,8 @@ import Browser from './pages/Browser';
 import FileManager from './pages/FileManager';
 import DownloadManager from './pages/DownloadManager';
 import ScriptManager from './pages/ScriptManager';
+import Bookmarks from './pages/Bookmarks';
+import History from './pages/History';
 import Settings from './pages/Settings';
 
 export default function App() {
@@ -16,6 +18,8 @@ export default function App() {
           <Route index element={<Navigate to="/browser" replace />} />
           <Route path="users" element={<UserManager />} />
           <Route path="browser" element={<Browser />} />
+          <Route path="bookmarks" element={<Bookmarks />} />
+          <Route path="history" element={<History />} />
           <Route path="files" element={<FileManager />} />
           <Route path="downloads" element={<DownloadManager />} />
           <Route path="scripts" element={<ScriptManager />} />

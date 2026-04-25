@@ -10,6 +10,7 @@ const { registerDownloadHandlers } = require('./downloadHandlers');
 const { registerBookmarkHandlers } = require('./bookmarkHandlers');
 const { registerHistoryHandlers } = require('./historyHandlers');
 const { registerScriptHandlers } = require('./scriptHandlers');
+const { registerSettingsHandlers } = require('./settingsHandlers');
 
 function registerAllHandlers() {
   registerUserHandlers();
@@ -19,6 +20,7 @@ function registerAllHandlers() {
   registerBookmarkHandlers();
   registerHistoryHandlers();
   registerScriptHandlers();
+  registerSettingsHandlers();
 }
 
 module.exports = { registerAllHandlers };

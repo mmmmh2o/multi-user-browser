@@ -1,13 +1,20 @@
 const { contextBridge, ipcRenderer } = require('electron');
+const path = require('path');
 
 /**
  * Preload 脚本 - 通过 contextBridge 安全暴露 API 给渲染进程
- * 
+ *
  * 安全原则：
  * - 使用 contextBridge 而非 nodeIntegration
  * - 只暴露必要的 IPC 通道
  * - 不暴露 ipcRenderer 原始对象
  */
+
+// 暴露 webview preload 路径给渲染进程
+// 渲染进程用它来设置 webview 的 preload 属性
+const webviewPreloadPath = path.join(__dirname, '../main/preload/webview-preload.js');
+contextBridge.exposeInMainWorld('__MUB_PRELOAD_PATH__', webviewPreloadPath);
+
 contextBridge.exposeInMainWorld('electronAPI', {
   // ========== 用户管理 ==========
   getUsers: () => ipcRenderer.invoke('get-users'),
@@ -64,6 +71,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onNotification: (callback) => {
     ipcRenderer.on('notification', (event, data) => callback(data));
   },
+
+  // ========== 设置管理 ==========
+  getSettings: () => ipcRenderer.invoke('get-settings'),
+  saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
+  resetSettings: () => ipcRenderer.invoke('reset-settings'),
 
   // ========== 移除监听器 ==========
   removeAllListeners: (channel) => {
