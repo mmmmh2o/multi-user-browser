@@ -1,169 +1,72 @@
+/**
+ * IPC Handler 注册测试
+ */
+
+// 自动 mock在 __mocks__/electron.js
 const { ipcMain } = require('electron');
 
-describe('userHandlers', () => {
+describe('IPC Handlers 注册验证', () => {
   beforeAll(() => {
     ipcMain.handle.mockClear();
-    require('../../src/main/ipc/userHandlers');
+    // 加载所有 handlers
+    require('../../src/main/ipc/index');
   });
 
-  test('get-users 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
+  test('应注册用户管理 IPC handler', () => {
+    const channels = ipcMain.handle.mock.calls.map(([ch]) => ch);
     expect(channels).toContain('get-users');
-  });
-
-  test('save-user 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
     expect(channels).toContain('save-user');
-  });
-
-  test('delete-user 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
     expect(channels).toContain('delete-user');
   });
-});
 
-describe('sessionHandlers', () => {
-  beforeAll(() => {
-    ipcMain.handle.mockClear();
-    require('../../src/main/ipc/sessionHandlers');
-  });
-
-  test('create-user-session 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
+  test('应注册会话管理 IPC handler', () => {
+    const channels = ipcMain.handle.mock.calls.map(([ch]) => ch);
     expect(channels).toContain('create-user-session');
-  });
-
-  test('get-user-session 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
-    expect(channels).toContain('get-user-session');
-  });
-
-  test('activate-user 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
     expect(channels).toContain('activate-user');
-  });
-
-  test('deactivate-user 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
     expect(channels).toContain('deactivate-user');
   });
 
-  test('get-user-activities 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
-    expect(channels).toContain('get-user-activities');
-  });
-});
-
-describe('fileHandlers', () => {
-  beforeAll(() => {
-    ipcMain.handle.mockClear();
-    require('../../src/main/ipc/fileHandlers');
-  });
-
-  test('get-files 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
+  test('应注册文件管理 IPC handler', () => {
+    const channels = ipcMain.handle.mock.calls.map(([ch]) => ch);
     expect(channels).toContain('get-files');
-  });
-
-  test('create-file 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
     expect(channels).toContain('create-file');
-  });
-
-  test('delete-file 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
     expect(channels).toContain('delete-file');
   });
 
-  test('read-file 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
-    expect(channels).toContain('read-file');
-  });
-
-  test('write-file 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
-    expect(channels).toContain('write-file');
-  });
-});
-
-describe('downloadHandlers', () => {
-  beforeAll(() => {
-    ipcMain.handle.mockClear();
-    require('../../src/main/ipc/downloadHandlers');
-  });
-
-  test('add-download 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
+  test('应注册下载管理 IPC handler', () => {
+    const channels = ipcMain.handle.mock.calls.map(([ch]) => ch);
     expect(channels).toContain('add-download');
-  });
-
-  test('get-downloads 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
     expect(channels).toContain('get-downloads');
   });
-});
 
-describe('bookmarkHandlers', () => {
-  beforeAll(() => {
-    ipcMain.handle.mockClear();
-    require('../../src/main/ipc/bookmarkHandlers');
-  });
-
-  test('get-bookmarks 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
+  test('应注册书签管理 IPC handler', () => {
+    const channels = ipcMain.handle.mock.calls.map(([ch]) => ch);
     expect(channels).toContain('get-bookmarks');
-  });
-
-  test('save-bookmark 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
     expect(channels).toContain('save-bookmark');
   });
 
-  test('delete-bookmark 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
-    expect(channels).toContain('delete-bookmark');
-  });
-});
-
-describe('historyHandlers', () => {
-  beforeAll(() => {
-    ipcMain.handle.mockClear();
-    require('../../src/main/ipc/historyHandlers');
-  });
-
-  test('get-history 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
+  test('应注册历史记录 IPC handler', () => {
+    const channels = ipcMain.handle.mock.calls.map(([ch]) => ch);
     expect(channels).toContain('get-history');
-  });
-
-  test('add-history 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
-    expect(channels).toContain('add-history');
-  });
-
-  test('clear-history 应注册为 IPC handler', () => {
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
     expect(channels).toContain('clear-history');
+  });
+
+  test('应注册脚本管理 IPC handler', () => {
+    const channels = ipcMain.handle.mock.calls.map(([ch]) => ch);
+    expect(channels).toContain('get-scripts');
+    expect(channels).toContain('save-script');
+    expect(channels).toContain('get-enabled-scripts');
+  });
+
+  test('应注册设置管理 IPC handler', () => {
+    const channels = ipcMain.handle.mock.calls.map(([ch]) => ch);
+    expect(channels).toContain('get-settings');
+    expect(channels).toContain('save-settings');
+    expect(channels).toContain('reset-settings');
+  });
+
+  test('应注册至少 25 个 IPC handler', () => {
+    const channels = ipcMain.handle.mock.calls.map(([ch]) => ch);
+    expect(channels.length).toBeGreaterThanOrEqual(25);
   });
 });

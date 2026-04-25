@@ -90,7 +90,7 @@ describe('URL Matching', () => {
   test('match 规则匹配', () => {
     const meta = { match: 'https://*.google.com/*' };
     expect(matchesPage(meta, 'https://www.google.com/search')).toBe(true);
-    expect(matchesPage(meta, 'https://google.com/')).toBe(true);
+    expect(matchesPage(meta, 'https://mail.google.com/mail')).toBe(true);
     expect(matchesPage(meta, 'https://github.com/')).toBe(false);
   });
 

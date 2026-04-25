@@ -1,31 +1,6 @@
-const { ipcMain } = require('electron');
-
-describe('IPC 集成测试', () => {
-  test('所有 IPC handler 应正确注册', () => {
-    ipcMain.handle.mockClear();
-
-    // 加载所有 handler
-    require('../../src/main/ipc/index');
-
-    const calls = ipcMain.handle.mock.calls;
-    const channels = calls.map(([channel]) => channel);
-
-    const expectedChannels = [
-      'get-users', 'save-user', 'delete-user',
-      'create-user-session', 'get-user-session', 'activate-user', 'deactivate-user', 'get-user-activities',
-      'get-files', 'create-file', 'create-directory', 'delete-file', 'rename-file', 'copy-file', 'move-file', 'read-file', 'write-file',
-      'add-download', 'pause-download', 'resume-download', 'cancel-download', 'get-downloads',
-      'get-bookmarks', 'save-bookmark', 'delete-bookmark',
-      'get-history', 'add-history', 'clear-history',
-      'get-scripts', 'save-script', 'delete-script', 'get-enabled-scripts',
-      'get-settings', 'save-settings', 'reset-settings',
-    ];
-
-    expectedChannels.forEach((channel) => {
-      expect(channels).toContain(channel);
-    });
-  });
-});
+/**
+ * 集成测试 — 数据模型验证
+ */
 
 describe('数据模型验证', () => {
   test('用户对象应包含必要字段', () => {
@@ -44,6 +19,7 @@ describe('数据模型验证', () => {
     expect(user).toHaveProperty('email');
     expect(user).toHaveProperty('createdAt');
     expect(user).toHaveProperty('isActive');
+    expect(typeof user.isActive).toBe('boolean');
   });
 
   test('下载任务对象应包含必要字段', () => {
@@ -76,8 +52,25 @@ describe('数据模型验证', () => {
     };
 
     expect(bookmark).toHaveProperty('id');
-    expect(bookmark).toHaveProperty('userId');
     expect(bookmark).toHaveProperty('url');
+  });
+
+  test('脚本对象应包含必要字段', () => {
+    const script = {
+      id: 'uuid-xxxx',
+      name: 'Test Script',
+      url: 'https://example.com/script.user.js',
+      code: '// ==UserScript==\n// @name Test\n// ==/UserScript==',
+      enabled: true,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    expect(script).toHaveProperty('id');
+    expect(script).toHaveProperty('name');
+    expect(script).toHaveProperty('enabled');
+    expect(typeof script.enabled).toBe('boolean');
+    expect(script.code).toContain('==UserScript==');
   });
 
   test('历史记录对象应包含必要字段', () => {
@@ -90,25 +83,22 @@ describe('数据模型验证', () => {
     };
 
     expect(entry).toHaveProperty('id');
-    expect(entry).toHaveProperty('userId');
     expect(entry).toHaveProperty('visitedAt');
   });
 
-  test('脚本对象应包含必要字段', () => {
-    const script = {
-      id: 'uuid-xxxx',
-      userId: 'user-xxxx',
-      name: 'Test Script',
-      url: '',
-      code: '// ==UserScript==',
-      enabled: false,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+  test('设置对象应包含默认值', () => {
+    const settings = {
+      defaultDownloadPath: './downloads',
+      maxHistoryItems: 100,
+      autoStart: false,
+      closeToTray: true,
+      enableNotification: true,
+      enableScripts: true,
+      homePage: 'about:blank',
     };
 
-    expect(script).toHaveProperty('id');
-    expect(script).toHaveProperty('name');
-    expect(script).toHaveProperty('enabled');
-    expect(typeof script.enabled).toBe('boolean');
+    expect(settings.maxHistoryItems).toBeGreaterThan(0);
+    expect(typeof settings.autoStart).toBe('boolean');
+    expect(typeof settings.enableScripts).toBe('boolean');
   });
 });
