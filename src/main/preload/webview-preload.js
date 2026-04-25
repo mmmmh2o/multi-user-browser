@@ -46,7 +46,7 @@ function matchesPage(meta, url) {
   return patterns.some((pattern) => {
     // 简化版匹配：* 通配符转正则
     const regex = new RegExp(
-      '^' + pattern.replace(/\*/g, '.*').replace(/\?/g, '.') + '$'
+      '^' + pattern.replace(/\*/g, '.*').replace(/\?/g, '.') + '$',
     );
     return regex.test(url);
   });

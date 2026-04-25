@@ -39,7 +39,7 @@ function registerFileHandlers() {
             extension: path.extname(entry.name),
             modifiedAt: stat.mtimeMs,
           };
-        })
+        }),
       );
       log.debug(`读取目录: ${safePath} (${files.length} 项)`);
       return files;

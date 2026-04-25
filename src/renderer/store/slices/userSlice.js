@@ -27,7 +27,7 @@ const userSlice = createSlice({
     deactivateUser: (state, action) => {
       const userId = action.payload;
       state.users = state.users.map((u) =>
-        u.id === userId ? { ...u, isActive: false } : u
+        u.id === userId ? { ...u, isActive: false } : u,
       );
       if (state.currentUser?.id === userId) {
         state.currentUser = null;

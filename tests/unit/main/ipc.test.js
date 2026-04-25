@@ -2,7 +2,7 @@ const { ipcMain } = require('electron');
 
 describe('userHandlers', () => {
   beforeAll(() => {
-    // 清除之前的 mock 调用记录
+    jest.resetModules();
     ipcMain.handle.mockClear();
     require('../../src/main/ipc/userHandlers');
   });

@@ -44,5 +44,17 @@ module.exports = {
         node: true,
       },
     },
+    {
+      // webview preload runs in browser context
+      files: ['src/main/preload/**/*.js'],
+      env: {
+        browser: true,
+        node: true,
+      },
+      rules: {
+        'no-console': 'off',
+        'no-empty': 'warn',
+      },
+    },
   ],
 };
