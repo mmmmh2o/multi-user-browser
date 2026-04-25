@@ -28,6 +28,30 @@ nsis:
   createStartMenuShortcut: true
   shortcutName: "Multi-User Browser"
 
+# macOS 配置
+mac:
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+  icon: build/icon.icns
+  category: public.app-category.productivity
+  artifactName: "${productName}-${version}.${ext}"
+
+# Linux 配置
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64
+    - target: deb
+      arch:
+        - x64
+  icon: build/icon.png
+  category: Network
+  artifactName: "${productName}-${version}.${ext}"
+
 # 文件包含
 files:
   - src/**/*

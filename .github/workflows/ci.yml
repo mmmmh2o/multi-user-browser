@@ -9,26 +9,26 @@ on:
 jobs:
   lint:
     name: Lint
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: npm
-      - run: npm ci
+      - run: npm install --prefer-offline --no-audit --no-fund
       - run: npm run lint
 
   test:
     name: Test
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: npm
-      - run: npm ci
+      - run: npm install --prefer-offline --no-audit --no-fund
       - run: npm run test:coverage
       - name: Upload coverage
         uses: actions/upload-artifact@v4
@@ -37,20 +37,37 @@ jobs:
           path: coverage/
 
   build:
-    name: Build
+    name: Build (${{ matrix.os }})
     needs: [lint, test]
-    runs-on: windows-latest
+    runs-on: ${{ matrix.os }}
     if: github.ref == 'refs/heads/main'
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            build_cmd: npm run build:dir
+            artifact_name: linux-build
+            artifact_path: dist/
+          - os: windows-latest
+            build_cmd: npm run build
+            artifact_name: windows-installer
+            artifact_path: dist/*.exe
+          - os: macos-latest
+            build_cmd: npm run build:dir
+            artifact_name: macos-build
+            artifact_path: dist/
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: npm
-      - run: npm ci
-      - run: npm run build
-      - name: Upload installer
+      - run: npm install --prefer-offline --no-audit --no-fund
+      - run: ${{ matrix.build_cmd }}
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: installer
-          path: dist/*.exe
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_path }}
+          if-no-files-found: warn
