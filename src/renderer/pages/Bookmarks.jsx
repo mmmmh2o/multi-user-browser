@@ -3,13 +3,13 @@ import {
   Card,
   Table,
   Button,
-  Space,
-  Popconfirm,
-  message,
-  Empty,
   Input,
+  Space,
   Tag,
   Tooltip,
+  Empty,
+  message,
+  Spin,
 } from 'antd';
 import {
   DeleteOutlined,
@@ -27,10 +27,17 @@ export default function Bookmarks() {
   const loadBookmarks = async () => {
     setLoading(true);
     try {
+      if (!window.electronAPI?.getBookmarks) {
+        console.warn('electronAPI.getBookmarks 不可用');
+        setBookmarks([]);
+        return;
+      }
       const data = await window.electronAPI.getBookmarks();
       setBookmarks(data || []);
     } catch (error) {
+      console.error('加载书签失败:', error);
       message.error('加载书签失败');
+      setBookmarks([]);
     }
     setLoading(false);
   };
@@ -49,33 +56,40 @@ export default function Bookmarks() {
     }
   };
 
-  const handleOpen = (url) => {
-    // 通知浏览器页面打开此 URL
-    window.dispatchEvent(
-      new CustomEvent('mub-navigate', { detail: { url } })
-    );
-    message.info('已在浏览器中打开');
-  };
-
   const filtered = bookmarks.filter(
     (b) =>
-      !search ||
-      b.title?.toLowerCase().includes(search.toLowerCase()) ||
-      b.url?.toLowerCase().includes(search.toLowerCase())
+      (b.title || '').toLowerCase().includes(search.toLowerCase()) ||
+      (b.url || '').toLowerCase().includes(search.toLowerCase())
   );
 
   const columns = [
     {
       title: '',
+      dataIndex: 'favicon',
       width: 32,
-      render: () => <StarFilled style={{ color: '#faad14' }} />,
+      render: (favicon) =>
+        favicon ? (
+          <img src={favicon} alt="" style={{ width: 16, height: 16 }} />
+        ) : (
+          <GlobalOutlined style={{ color: '#999' }} />
+        ),
     },
     {
-      title: '名称',
+      title: '标题',
       dataIndex: 'title',
       ellipsis: true,
       render: (title, record) => (
-        <a onClick={() => handleOpen(record.url)} title={record.url}>
+        <a
+          href={record.url}
+          onClick={(e) => {
+            e.preventDefault();
+            if (window.electronAPI?.getBookmarks) {
+              window.dispatchEvent(
+                new CustomEvent('mub-navigate', { detail: { url: record.url } })
+              );
+            }
+          }}
+        >
           {title || record.url}
         </a>
       ),
@@ -86,38 +100,30 @@ export default function Bookmarks() {
       ellipsis: true,
       render: (url) => (
         <Tooltip title={url}>
-          <span style={{ color: '#999', fontSize: 12 }}>
-            <GlobalOutlined style={{ marginRight: 4 }} />
-            {url}
-          </span>
+          <span style={{ color: '#999', fontSize: 12 }}>{url}</span>
         </Tooltip>
       ),
     },
     {
       title: '添加时间',
       dataIndex: 'createdAt',
-      width: 180,
+      width: 160,
       render: (ts) => (ts ? new Date(ts).toLocaleString('zh-CN') : '-'),
-      sorter: (a, b) => (a.createdAt || 0) - (b.createdAt || 0),
     },
     {
       title: '操作',
-      width: 140,
+      width: 80,
       render: (_, record) => (
         <Space>
-          <Button
-            type="link"
-            size="small"
-            icon={<ExportOutlined />}
-            onClick={() => handleOpen(record.url)}
-          >
-            打开
-          </Button>
-          <Popconfirm title="确定删除此书签？" onConfirm={() => handleDelete(record.id)}>
-            <Button type="link" size="small" danger icon={<DeleteOutlined />}>
-              删除
-            </Button>
-          </Popconfirm>
+          <Tooltip title="删除">
+            <Button
+              type="text"
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => handleDelete(record.id)}
+            />
+          </Tooltip>
         </Space>
       ),
     },
@@ -125,17 +131,24 @@ export default function Bookmarks() {
 
   return (
     <Card
-      title="书签管理"
-      subTitle={`共 ${bookmarks.length} 个书签`}
+      title={
+        <Space>
+          <StarFilled style={{ color: '#faad14' }} />
+          <span>书签管理</span>
+        </Space>
+      }
+      subTitle="收藏的网页，支持搜索和删除"
       extra={
-        <Input
-          placeholder="搜索书签..."
-          prefix={<SearchOutlined />}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          allowClear
-          style={{ width: 240 }}
-        />
+        <Space>
+          <Input
+            placeholder="搜索书签..."
+            prefix={<SearchOutlined />}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            allowClear
+            style={{ width: 200 }}
+          />
+        </Space>
       }
     >
       <Table
@@ -143,8 +156,20 @@ export default function Bookmarks() {
         dataSource={filtered}
         rowKey="id"
         loading={loading}
-        pagination={{ pageSize: 20 }}
-        locale={{ emptyText: <Empty description="暂无书签，在浏览器中点击 ⭐ 收藏" /> }}
+        pagination={{ pageSize: 15, showTotal: (t) => `共 ${t} 条` }}
+        locale={{
+          emptyText: (
+            <Empty
+              description={
+                <span>
+                  暂无书签
+                  <br />
+                  <small style={{ color: '#999' }}>在浏览器中点击 ⭐ 收藏网页</small>
+                </span>
+              }
+            />
+          ),
+        }}
       />
     </Card>
   );
