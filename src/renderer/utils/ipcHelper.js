@@ -18,7 +18,7 @@ export async function safeCall(apiFn, fallback = null, timeout = IPC_TIMEOUT) {
   return Promise.race([
     apiFn(),
     new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('IPC 调用超时')), timeout)
+      setTimeout(() => reject(new Error('IPC 调用超时')), timeout),
     ),
   ]).catch((err) => {
     console.error('[IPC] 调用失败:', err.message);
