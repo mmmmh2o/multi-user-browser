@@ -3,9 +3,10 @@ node_modules/
 package-lock.json
 
 # Build output
-dist/
-build/
-out/
+/dist/
+/build/
+/out/
+src/renderer/dist/
 
 # IDE
 .vscode/
