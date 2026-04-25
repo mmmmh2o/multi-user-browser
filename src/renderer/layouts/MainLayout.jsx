@@ -9,6 +9,7 @@ import {
   CodeOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
+import NotificationBell from '../components/NotificationBell';
 
 const { Sider, Content, Header } = Layout;
 
@@ -65,11 +66,13 @@ export default function MainLayout() {
             borderBottom: `1px solid ${token.colorBorderSecondary}`,
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'space-between',
           }}
         >
           <h2 style={{ margin: 0, fontSize: 16, fontWeight: 500 }}>
             {menuItems.find((item) => item.key === location.pathname)?.label || ''}
           </h2>
+          <NotificationBell />
         </Header>
         <Content style={{ padding: 24, background: token.colorBgLayout }}>
           <Outlet />
