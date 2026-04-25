@@ -13,6 +13,7 @@ import {
   Avatar,
   Tooltip,
   Badge,
+  Empty,
 } from 'antd';
 import {
   PlusOutlined,
@@ -33,10 +34,17 @@ export default function UserManager() {
   const loadUsers = async () => {
     setLoading(true);
     try {
+      if (!window.electronAPI?.getUsers) {
+        console.warn('electronAPI.getUsers 不可用');
+        setUsers([]);
+        return;
+      }
       const data = await window.electronAPI.getUsers();
       setUsers(data || []);
     } catch (error) {
+      console.error('加载用户失败:', error);
       message.error('加载用户失败');
+      setUsers([]);
     }
     setLoading(false);
   };
@@ -84,11 +92,9 @@ export default function UserManager() {
 
   const handleActivate = async (userId) => {
     try {
-      // 先停用所有用户
       for (const u of users.filter((u) => u.isActive)) {
         await window.electronAPI.deactivateUser(u.id);
       }
-      // 创建会话并激活
       await window.electronAPI.createSession(userId);
       await window.electronAPI.activateUser(userId);
       message.success('用户已激活，浏览器会话已隔离');
@@ -124,9 +130,7 @@ export default function UserManager() {
       dataIndex: 'name',
       sorter: (a, b) => a.name.localeCompare(b.name),
       render: (name, record) => (
-        <span style={{ fontWeight: record.isActive ? 600 : 400 }}>
-          {name}
-        </span>
+        <span style={{ fontWeight: record.isActive ? 600 : 400 }}>{name}</span>
       ),
     },
     {
@@ -147,7 +151,7 @@ export default function UserManager() {
     {
       title: '创建时间',
       dataIndex: 'createdAt',
-      render: (ts) => new Date(ts).toLocaleString('zh-CN'),
+      render: (ts) => (ts ? new Date(ts).toLocaleString('zh-CN') : '-'),
       sorter: (a, b) => a.createdAt - b.createdAt,
     },
     {
@@ -212,7 +216,20 @@ export default function UserManager() {
         dataSource={users}
         rowKey="id"
         loading={loading}
-        pagination={{ pageSize: 10 }}
+        pagination={{ pageSize: 10, showTotal: (t) => `共 ${t} 个用户` }}
+        locale={{
+          emptyText: (
+            <Empty
+              description={
+                <span>
+                  暂无用户
+                  <br />
+                  <small style={{ color: '#999' }}>点击"添加用户"创建第一个用户</small>
+                </span>
+              }
+            />
+          ),
+        }}
       />
 
       <Modal
