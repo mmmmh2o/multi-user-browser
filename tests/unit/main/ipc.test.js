@@ -2,14 +2,34 @@
  * IPC Handler 注册测试
  */
 
-// 自动 mock在 __mocks__/electron.js
+jest.mock('electron', () => ({
+  ipcMain: { handle: jest.fn() },
+}));
+
+jest.mock('electron-store', () => {
+  return jest.fn().mockImplementation(() => ({
+    get: (key, defaultVal) => defaultVal,
+    set: () => {},
+  }));
+});
+
+jest.mock('electron-log', () => ({
+  info: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn(),
+  warn: jest.fn(),
+}));
+
+jest.mock('uuid', () => ({
+  v4: () => 'mock-uuid-' + Date.now(),
+}));
+
 const { ipcMain } = require('electron');
 
 describe('IPC Handlers 注册验证', () => {
   beforeAll(() => {
     ipcMain.handle.mockClear();
-    // 加载所有 handlers
-    require('../../../src/main/ipc/index');
+    require('../../../src/main/ipc/index').registerAllHandlers();
   });
 
   test('应注册用户管理 IPC handler', () => {
