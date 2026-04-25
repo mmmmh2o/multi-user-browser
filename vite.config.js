@@ -7,7 +7,7 @@ module.exports = defineConfig({
   root: path.resolve(__dirname, 'src/renderer'),
   base: './',
   build: {
-    outDir: path.resolve(__dirname, 'dist/renderer'),
+    outDir: path.resolve(__dirname, 'src/renderer/dist'),
     emptyOutDir: true,
   },
   server: {
