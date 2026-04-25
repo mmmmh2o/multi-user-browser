@@ -15,8 +15,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: npm
-      - run: npm install --prefer-offline --no-audit --no-fund
+      - run: npm install --no-audit --no-fund
       - run: npm run lint
 
   test:
@@ -27,8 +26,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: npm
-      - run: npm install --prefer-offline --no-audit --no-fund
+      - run: npm install --no-audit --no-fund
       - run: npm run test:coverage
       - name: Upload coverage
         uses: actions/upload-artifact@v4
@@ -62,8 +60,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: npm
-      - run: npm install --prefer-offline --no-audit --no-fund
+      - run: npm install --no-audit --no-fund
       - run: ${{ matrix.build_cmd }}
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
