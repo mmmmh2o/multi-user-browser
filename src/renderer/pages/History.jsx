@@ -17,6 +17,7 @@ import {
   ClearOutlined,
   GlobalOutlined,
 } from '@ant-design/icons';
+import { safeCall } from '../utils/ipcHelper';
 
 export default function History() {
   const [history, setHistory] = useState([]);
@@ -26,19 +27,18 @@ export default function History() {
   const loadHistory = async () => {
     setLoading(true);
     try {
-      if (!window.electronAPI?.getHistory) {
-        console.warn('electronAPI.getHistory 不可用');
-        setHistory([]);
-        return;
-      }
-      const data = await window.electronAPI.getHistory();
+      const data = await safeCall(
+        window.electronAPI?.getHistory,
+        []
+      );
       setHistory(data || []);
     } catch (error) {
       console.error('加载历史失败:', error);
       message.error('加载历史记录失败');
       setHistory([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export default function History() {
 
   const handleDelete = async (id) => {
     try {
-      const result = await window.electronAPI.deleteHistory?.(id);
+      await safeCall(() => window.electronAPI.deleteHistory(id));
       message.success('已删除');
       loadHistory();
     } catch (error) {
@@ -57,7 +57,7 @@ export default function History() {
 
   const handleClear = async () => {
     try {
-      await window.electronAPI.clearHistory();
+      await safeCall(() => window.electronAPI.clearHistory());
       message.success('历史记录已清空');
       loadHistory();
     } catch (error) {

@@ -14,6 +14,7 @@ import {
   Popconfirm,
 } from 'antd';
 import { SaveOutlined, UndoOutlined, SettingOutlined } from '@ant-design/icons';
+import { safeCall } from '../utils/ipcHelper';
 
 export default function Settings() {
   const [form] = Form.useForm();
@@ -23,17 +24,17 @@ export default function Settings() {
   const loadSettings = async () => {
     setLoading(true);
     try {
-      if (!window.electronAPI?.getSettings) {
-        console.warn('electronAPI.getSettings 不可用');
-        return;
-      }
-      const settings = await window.electronAPI.getSettings();
+      const settings = await safeCall(
+        window.electronAPI?.getSettings,
+        {}
+      );
       form.setFieldsValue(settings || {});
     } catch (error) {
       console.error('加载设置失败:', error);
       message.error('加载设置失败');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -44,18 +45,19 @@ export default function Settings() {
     setSaving(true);
     try {
       const values = await form.validateFields();
-      await window.electronAPI.saveSettings(values);
+      await safeCall(() => window.electronAPI.saveSettings(values));
       message.success('设置已保存');
     } catch (error) {
       console.error('保存设置失败:', error);
       message.error('保存失败');
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const handleReset = async () => {
     try {
-      await window.electronAPI.resetSettings();
+      await safeCall(() => window.electronAPI.resetSettings());
       message.success('设置已重置');
       loadSettings();
     } catch (error) {

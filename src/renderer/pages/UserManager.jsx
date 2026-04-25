@@ -23,6 +23,7 @@ import {
   CheckCircleOutlined,
   StopOutlined,
 } from '@ant-design/icons';
+import { safeCall } from '../utils/ipcHelper';
 
 export default function UserManager() {
   const [users, setUsers] = useState([]);
@@ -34,19 +35,18 @@ export default function UserManager() {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      if (!window.electronAPI?.getUsers) {
-        console.warn('electronAPI.getUsers 不可用');
-        setUsers([]);
-        return;
-      }
-      const data = await window.electronAPI.getUsers();
+      const data = await safeCall(
+        window.electronAPI?.getUsers,
+        []
+      );
       setUsers(data || []);
     } catch (error) {
       console.error('加载用户失败:', error);
       message.error('加载用户失败');
       setUsers([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -57,7 +57,7 @@ export default function UserManager() {
     try {
       const values = await form.validateFields();
       const user = editingUser ? { ...editingUser, ...values } : values;
-      await window.electronAPI.saveUser(user);
+      await safeCall(() => window.electronAPI.saveUser(user));
       message.success(editingUser ? '用户已更新' : '用户已创建');
       setModalOpen(false);
       form.resetFields();
@@ -70,7 +70,7 @@ export default function UserManager() {
 
   const handleDelete = async (userId) => {
     try {
-      await window.electronAPI.deleteUser(userId);
+      await safeCall(() => window.electronAPI.deleteUser(userId));
       message.success('用户已删除');
       loadUsers();
     } catch (error) {
@@ -93,10 +93,10 @@ export default function UserManager() {
   const handleActivate = async (userId) => {
     try {
       for (const u of users.filter((u) => u.isActive)) {
-        await window.electronAPI.deactivateUser(u.id);
+        await safeCall(() => window.electronAPI.deactivateUser(u.id));
       }
-      await window.electronAPI.createSession(userId);
-      await window.electronAPI.activateUser(userId);
+      await safeCall(() => window.electronAPI.createSession(userId));
+      await safeCall(() => window.electronAPI.activateUser(userId));
       message.success('用户已激活，浏览器会话已隔离');
       loadUsers();
     } catch (error) {
@@ -106,7 +106,7 @@ export default function UserManager() {
 
   const handleDeactivate = async (userId) => {
     try {
-      await window.electronAPI.deactivateUser(userId);
+      await safeCall(() => window.electronAPI.deactivateUser(userId));
       message.success('用户已停用');
       loadUsers();
     } catch (error) {

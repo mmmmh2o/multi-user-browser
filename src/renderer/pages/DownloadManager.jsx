@@ -22,6 +22,7 @@ import {
   DownloadOutlined,
   FolderOutlined,
 } from '@ant-design/icons';
+import { safeCall } from '../utils/ipcHelper';
 
 export default function DownloadManager() {
   const [downloads, setDownloads] = useState([]);
@@ -33,24 +34,22 @@ export default function DownloadManager() {
   const loadDownloads = async () => {
     setLoading(true);
     try {
-      if (!window.electronAPI?.getDownloads) {
-        console.warn('electronAPI.getDownloads 不可用');
-        setDownloads([]);
-        return;
-      }
-      const data = await window.electronAPI.getDownloads();
+      const data = await safeCall(
+        window.electronAPI?.getDownloads,
+        []
+      );
       setDownloads(data || []);
     } catch (error) {
       console.error('加载下载列表失败:', error);
       message.error('加载下载列表失败');
       setDownloads([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
     loadDownloads();
-    // 监听下载进度
     window.electronAPI?.onDownloadProgress?.((data) => {
       setDownloads((prev) =>
         prev.map((d) => (d.id === data.id ? { ...d, ...data } : d))
@@ -70,7 +69,7 @@ export default function DownloadManager() {
       return;
     }
     try {
-      await window.electronAPI.addDownload(url, savePath || undefined);
+      await safeCall(() => window.electronAPI.addDownload(url, savePath || undefined));
       message.success('下载任务已添加');
       setAddModalOpen(false);
       setUrl('');
@@ -83,7 +82,7 @@ export default function DownloadManager() {
 
   const handlePause = async (id) => {
     try {
-      await window.electronAPI.pauseDownload(id);
+      await safeCall(() => window.electronAPI.pauseDownload(id));
       loadDownloads();
     } catch (error) {
       message.error('暂停失败');
@@ -92,7 +91,7 @@ export default function DownloadManager() {
 
   const handleResume = async (id) => {
     try {
-      await window.electronAPI.resumeDownload(id);
+      await safeCall(() => window.electronAPI.resumeDownload(id));
       loadDownloads();
     } catch (error) {
       message.error('恢复失败');
@@ -101,7 +100,7 @@ export default function DownloadManager() {
 
   const handleCancel = async (id) => {
     try {
-      await window.electronAPI.cancelDownload(id);
+      await safeCall(() => window.electronAPI.cancelDownload(id));
       message.success('已取消');
       loadDownloads();
     } catch (error) {

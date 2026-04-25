@@ -5,19 +5,17 @@ import {
   Button,
   Input,
   Space,
-  Tag,
   Tooltip,
   Empty,
   message,
-  Spin,
 } from 'antd';
 import {
   DeleteOutlined,
-  ExportOutlined,
   StarFilled,
   SearchOutlined,
   GlobalOutlined,
 } from '@ant-design/icons';
+import { safeCall } from '../utils/ipcHelper';
 
 export default function Bookmarks() {
   const [bookmarks, setBookmarks] = useState([]);
@@ -27,19 +25,18 @@ export default function Bookmarks() {
   const loadBookmarks = async () => {
     setLoading(true);
     try {
-      if (!window.electronAPI?.getBookmarks) {
-        console.warn('electronAPI.getBookmarks 不可用');
-        setBookmarks([]);
-        return;
-      }
-      const data = await window.electronAPI.getBookmarks();
+      const data = await safeCall(
+        window.electronAPI?.getBookmarks,
+        []
+      );
       setBookmarks(data || []);
     } catch (error) {
       console.error('加载书签失败:', error);
       message.error('加载书签失败');
       setBookmarks([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -48,7 +45,7 @@ export default function Bookmarks() {
 
   const handleDelete = async (id) => {
     try {
-      await window.electronAPI.deleteBookmark(id);
+      await safeCall(() => window.electronAPI.deleteBookmark(id));
       message.success('书签已删除');
       loadBookmarks();
     } catch (error) {
@@ -83,11 +80,9 @@ export default function Bookmarks() {
           href={record.url}
           onClick={(e) => {
             e.preventDefault();
-            if (window.electronAPI?.getBookmarks) {
-              window.dispatchEvent(
-                new CustomEvent('mub-navigate', { detail: { url: record.url } })
-              );
-            }
+            window.dispatchEvent(
+              new CustomEvent('mub-navigate', { detail: { url: record.url } })
+            );
           }}
         >
           {title || record.url}

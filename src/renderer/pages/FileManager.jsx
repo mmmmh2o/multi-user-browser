@@ -11,7 +11,6 @@ import {
   Popconfirm,
   Empty,
   message,
-  Breadcrumb,
   Tooltip,
 } from 'antd';
 import {
@@ -23,6 +22,7 @@ import {
   ArrowUpOutlined,
   HomeOutlined,
 } from '@ant-design/icons';
+import { safeCall } from '../utils/ipcHelper';
 
 export default function FileManager() {
   const [files, setFiles] = useState([]);
@@ -37,12 +37,10 @@ export default function FileManager() {
   const loadFiles = async (dirPath) => {
     setLoading(true);
     try {
-      if (!window.electronAPI?.getFiles) {
-        console.warn('electronAPI.getFiles 不可用');
-        setFiles([]);
-        return;
-      }
-      const result = await window.electronAPI.getFiles(dirPath || currentPath);
+      const result = await safeCall(
+        () => window.electronAPI.getFiles(dirPath || currentPath),
+        []
+      );
       if (result?.error) {
         message.error(result.error);
         setFiles([]);
@@ -50,80 +48,55 @@ export default function FileManager() {
         setFiles(result || []);
       }
     } catch (error) {
-      console.error('加载文件失败:', error);
+      console.error('加载文件列表失败:', error);
       message.error('加载文件列表失败');
       setFiles([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
-    // 初始加载用户主目录
-    const home = window.electronAPI?.getHomePath?.() || '~';
-    setCurrentPath(home);
-    loadFiles(home);
-  }, []);
-
-  const navigateTo = (dirPath) => {
-    setCurrentPath(dirPath);
-    loadFiles(dirPath);
-  };
+    loadFiles();
+  }, [currentPath]);
 
   const handleGoUp = () => {
-    const parent = currentPath.replace(/[/\\][^/\\]+$/, '') || currentPath;
-    navigateTo(parent);
-  };
-
-  const handleDelete = async (filePath) => {
-    try {
-      const result = await window.electronAPI.deleteFile(filePath);
-      if (result?.success) {
-        message.success('已删除');
-        loadFiles();
-      } else {
-        message.error(result?.error || '删除失败');
-      }
-    } catch (error) {
-      message.error('删除失败');
-    }
+    const parts = currentPath.replace(/\\/g, '/').split('/');
+    parts.pop();
+    setCurrentPath(parts.join('/') || '');
   };
 
   const handleCreate = async () => {
     try {
       if (createType === 'folder') {
-        if (!newFolderName.trim()) {
-          message.warning('请输入文件夹名称');
-          return;
-        }
-        const fullPath = `${currentPath}/${newFolderName}`.replace('//', '/');
-        const result = await window.electronAPI.createDirectory(fullPath);
-        if (result?.success) {
-          message.success('文件夹已创建');
-          setCreateModalOpen(false);
-          setNewFolderName('');
-          loadFiles();
-        } else {
-          message.error(result?.error || '创建失败');
-        }
+        await safeCall(() => window.electronAPI.createDirectory(
+          `${currentPath}/${newFolderName}`.replace('//', '/')
+        ));
+        message.success('文件夹已创建');
       } else {
-        if (!newFileName.trim()) {
-          message.warning('请输入文件名');
-          return;
-        }
-        const fullPath = `${currentPath}/${newFileName}`.replace('//', '/');
-        const result = await window.electronAPI.createFile(fullPath, newFileContent);
-        if (result?.success) {
-          message.success('文件已创建');
-          setCreateModalOpen(false);
-          setNewFileName('');
-          setNewFileContent('');
-          loadFiles();
-        } else {
-          message.error(result?.error || '创建失败');
-        }
+        await safeCall(() => window.electronAPI.createFile(
+          `${currentPath}/${newFileName}`.replace('//', '/'),
+          newFileContent
+        ));
+        message.success('文件已创建');
       }
+      setCreateModalOpen(false);
+      setNewFolderName('');
+      setNewFileName('');
+      setNewFileContent('');
+      loadFiles();
     } catch (error) {
       message.error('创建失败');
+    }
+  };
+
+  const handleDelete = async (filePath) => {
+    try {
+      await safeCall(() => window.electronAPI.deleteFile(filePath));
+      message.success('已删除');
+      loadFiles();
+    } catch (error) {
+      message.error('删除失败');
     }
   };
 
@@ -134,31 +107,24 @@ export default function FileManager() {
       width: 32,
       render: (isDir) =>
         isDir ? (
-          <FolderOutlined style={{ color: '#faad14', fontSize: 16 }} />
+          <FolderOutlined style={{ color: '#faad14' }} />
         ) : (
-          <FileOutlined style={{ color: '#999', fontSize: 16 }} />
+          <FileOutlined style={{ color: '#999' }} />
         ),
     },
     {
       title: '名称',
       dataIndex: 'name',
       sorter: (a, b) => {
-        if (a.isDirectory && !b.isDirectory) return -1;
-        if (!a.isDirectory && b.isDirectory) return 1;
+        if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1;
         return a.name.localeCompare(b.name);
       },
-      render: (name, record) => (
-        <a
-          onClick={() => {
-            if (record.isDirectory) {
-              navigateTo(record.path);
-            }
-          }}
-          style={{ cursor: record.isDirectory ? 'pointer' : 'default' }}
-        >
-          {name}
-        </a>
-      ),
+      render: (name, record) =>
+        record.isDirectory ? (
+          <a onClick={() => setCurrentPath(record.path)}>{name}</a>
+        ) : (
+          <span>{name}</span>
+        ),
     },
     {
       title: '大小',
@@ -166,6 +132,7 @@ export default function FileManager() {
       width: 100,
       render: (size, record) => {
         if (record.isDirectory) return '-';
+        if (!size) return '-';
         if (size < 1024) return `${size} B`;
         if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
         return `${(size / (1024 * 1024)).toFixed(1)} MB`;
@@ -179,26 +146,36 @@ export default function FileManager() {
     },
     {
       title: '操作',
-      width: 80,
+      width: 120,
       render: (_, record) => (
-        <Popconfirm
-          title={`确定删除 "${record.name}"？`}
-          onConfirm={() => handleDelete(record.path)}
-        >
-          <Tooltip title="删除">
+        <Space>
+          <Tooltip title="重命名">
             <Button
               type="text"
               size="small"
-              danger
-              icon={<DeleteOutlined />}
+              icon={<EditOutlined />}
+              onClick={() => {
+                const newName = prompt('新名称:', record.name);
+                if (newName && newName !== record.name) {
+                  const dir = record.path.replace(/\\/g, '/').split('/').slice(0, -1).join('/');
+                  safeCall(() => window.electronAPI.renameFile(record.path, `${dir}/${newName}`))
+                    .then(() => { message.success('已重命名'); loadFiles(); });
+                }
+              }}
             />
           </Tooltip>
-        </Popconfirm>
+          <Popconfirm
+            title={`确定删除 "${record.name}"？`}
+            onConfirm={() => handleDelete(record.path)}
+          >
+            <Tooltip title="删除">
+              <Button type="text" size="small" danger icon={<DeleteOutlined />} />
+            </Tooltip>
+          </Popconfirm>
+        </Space>
       ),
     },
   ];
-
-  const pathParts = currentPath.split(/[/\\]/).filter(Boolean);
 
   return (
     <Card
@@ -208,62 +185,55 @@ export default function FileManager() {
           <span>文件管理</span>
         </Space>
       }
-      subTitle="浏览和管理本地文件"
+      subTitle="浏览和管理文件"
       extra={
         <Space>
           <Button
-            icon={<ArrowUpOutlined />}
-            onClick={handleGoUp}
-            disabled={!currentPath || currentPath === '/'}
+            icon={<PlusOutlined />}
+            onClick={() => { setCreateType('folder'); setCreateModalOpen(true); }}
           >
-            上级
-          </Button>
-          <Button
-            icon={<HomeOutlined />}
-            onClick={() => navigateTo(window.electronAPI?.getHomePath?.() || '~')}
-          >
-            主页
+            新建文件夹
           </Button>
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            onClick={() => {
-              setCreateType('file');
-              setCreateModalOpen(true);
-            }}
+            onClick={() => { setCreateType('file'); setCreateModalOpen(true); }}
           >
-            新建
+            新建文件
           </Button>
         </Space>
       }
     >
-      {/* 路径面包屑 */}
-      <div style={{ marginBottom: 12, padding: '8px 12px', background: '#fafafa', borderRadius: 6 }}>
-        <Breadcrumb
-          items={pathParts.map((part, idx) => ({
-            title: (
-              <a onClick={() => navigateTo('/' + pathParts.slice(0, idx + 1).join('/'))}>
-                {part}
-              </a>
-            ),
-          }))}
+      <Space style={{ marginBottom: 16 }}>
+        <Button icon={<HomeOutlined />} onClick={() => setCurrentPath('')}>
+          根目录
+        </Button>
+        <Button icon={<ArrowUpOutlined />} onClick={handleGoUp} disabled={!currentPath}>
+          上级
+        </Button>
+        <Input
+          value={currentPath}
+          onChange={(e) => setCurrentPath(e.target.value)}
+          placeholder="输入路径..."
+          style={{ width: 400 }}
+          onPressEnter={() => loadFiles()}
         />
-      </div>
+      </Space>
 
       <Table
         columns={columns}
         dataSource={files}
         rowKey="path"
         loading={loading}
-        pagination={files.length > 50 ? { pageSize: 50 } : false}
+        pagination={{ pageSize: 20, showTotal: (t) => `共 ${t} 项` }}
         locale={{
           emptyText: (
             <Empty
               description={
                 <span>
-                  此文件夹为空
+                  此目录为空
                   <br />
-                  <small style={{ color: '#999' }}>点击"新建"创建文件或文件夹</small>
+                  <small style={{ color: '#999' }}>点击上方按钮创建文件或文件夹</small>
                 </span>
               }
             />
@@ -280,47 +250,32 @@ export default function FileManager() {
         cancelText="取消"
       >
         <Form layout="vertical">
-          <Form.Item label="类型">
-            <Space>
-              <Button
-                type={createType === 'file' ? 'primary' : 'default'}
-                onClick={() => setCreateType('file')}
-              >
-                文件
-              </Button>
-              <Button
-                type={createType === 'folder' ? 'primary' : 'default'}
-                onClick={() => setCreateType('folder')}
-              >
-                文件夹
-              </Button>
-            </Space>
-          </Form.Item>
-          <Form.Item
-            label={createType === 'folder' ? '文件夹名' : '文件名'}
-            required
-          >
-            <Input
-              value={createType === 'folder' ? newFolderName : newFileName}
-              onChange={(e) =>
-                createType === 'folder'
-                  ? setNewFolderName(e.target.value)
-                  : setNewFileName(e.target.value)
-              }
-              placeholder={
-                createType === 'folder' ? '请输入文件夹名' : '请输入文件名'
-              }
-            />
-          </Form.Item>
-          {createType === 'file' && (
-            <Form.Item label="内容">
-              <Input.TextArea
-                value={newFileContent}
-                onChange={(e) => setNewFileContent(e.target.value)}
-                placeholder="文件内容（可选）"
-                rows={4}
+          {createType === 'folder' ? (
+            <Form.Item label="文件夹名称" required>
+              <Input
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+                placeholder="请输入文件夹名称"
               />
             </Form.Item>
+          ) : (
+            <>
+              <Form.Item label="文件名" required>
+                <Input
+                  value={newFileName}
+                  onChange={(e) => setNewFileName(e.target.value)}
+                  placeholder="请输入文件名"
+                />
+              </Form.Item>
+              <Form.Item label="文件内容">
+                <Input.TextArea
+                  value={newFileContent}
+                  onChange={(e) => setNewFileContent(e.target.value)}
+                  placeholder="文件内容（可选）"
+                  rows={6}
+                />
+              </Form.Item>
+            </>
           )}
         </Form>
       </Modal>

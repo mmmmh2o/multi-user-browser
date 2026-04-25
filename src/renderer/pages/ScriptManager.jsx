@@ -6,15 +6,20 @@ import {
   Modal,
   Form,
   Input,
-  Switch,
   Space,
-  Tag,
+  Switch,
   Popconfirm,
   Empty,
   message,
   Tooltip,
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, CodeOutlined } from '@ant-design/icons';
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  CodeOutlined,
+} from '@ant-design/icons';
+import { safeCall } from '../utils/ipcHelper';
 
 export default function ScriptManager() {
   const [scripts, setScripts] = useState([]);
@@ -26,19 +31,18 @@ export default function ScriptManager() {
   const loadScripts = async () => {
     setLoading(true);
     try {
-      if (!window.electronAPI?.getScripts) {
-        console.warn('electronAPI.getScripts 不可用');
-        setScripts([]);
-        return;
-      }
-      const data = await window.electronAPI.getScripts();
+      const data = await safeCall(
+        window.electronAPI?.getScripts,
+        []
+      );
       setScripts(data || []);
     } catch (error) {
       console.error('加载脚本失败:', error);
       message.error('加载脚本失败');
       setScripts([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -49,7 +53,7 @@ export default function ScriptManager() {
     try {
       const values = await form.validateFields();
       const script = editingScript ? { ...editingScript, ...values } : values;
-      await window.electronAPI.saveScript(script);
+      await safeCall(() => window.electronAPI.saveScript(script));
       message.success(editingScript ? '脚本已更新' : '脚本已创建');
       setModalOpen(false);
       form.resetFields();
@@ -62,11 +66,23 @@ export default function ScriptManager() {
 
   const handleDelete = async (id) => {
     try {
-      await window.electronAPI.deleteScript(id);
+      await safeCall(() => window.electronAPI.deleteScript(id));
       message.success('脚本已删除');
       loadScripts();
     } catch (error) {
       message.error('删除失败');
+    }
+  };
+
+  const handleToggle = async (script) => {
+    try {
+      await safeCall(() => window.electronAPI.saveScript({
+        ...script,
+        enabled: !script.enabled,
+      }));
+      loadScripts();
+    } catch (error) {
+      message.error('切换失败');
     }
   };
 
@@ -82,35 +98,17 @@ export default function ScriptManager() {
     setModalOpen(true);
   };
 
-  const handleToggleEnabled = async (script) => {
-    try {
-      await window.electronAPI.saveScript({
-        ...script,
-        enabled: !script.enabled,
-      });
-      message.success(script.enabled ? '已禁用' : '已启用');
-      loadScripts();
-    } catch (error) {
-      message.error('操作失败');
-    }
-  };
-
   const columns = [
     {
       title: '名称',
       dataIndex: 'name',
-      render: (name) => (
-        <Space>
-          <CodeOutlined style={{ color: '#1677ff' }} />
-          <span style={{ fontWeight: 500 }}>{name}</span>
-        </Space>
-      ),
+      render: (name) => <strong>{name}</strong>,
     },
     {
-      title: '匹配规则',
+      title: '匹配',
       dataIndex: 'match',
       ellipsis: true,
-      render: (match) => match || <span style={{ color: '#ccc' }}>-</span>,
+      render: (match) => match || <span style={{ color: '#ccc' }}>全部页面</span>,
     },
     {
       title: '状态',
@@ -120,21 +118,19 @@ export default function ScriptManager() {
         <Switch
           checked={enabled}
           size="small"
-          onChange={() => handleToggleEnabled(record)}
-          checkedChildren="启用"
-          unCheckedChildren="禁用"
+          onChange={() => handleToggle(record)}
         />
       ),
     },
     {
-      title: '创建时间',
-      dataIndex: 'createdAt',
+      title: '更新时间',
+      dataIndex: 'updatedAt',
       width: 160,
       render: (ts) => (ts ? new Date(ts).toLocaleString('zh-CN') : '-'),
     },
     {
       title: '操作',
-      width: 140,
+      width: 120,
       render: (_, record) => (
         <Space>
           <Tooltip title="编辑">
@@ -150,12 +146,7 @@ export default function ScriptManager() {
             onConfirm={() => handleDelete(record.id)}
           >
             <Tooltip title="删除">
-              <Button
-                type="text"
-                size="small"
-                danger
-                icon={<DeleteOutlined />}
-              />
+              <Button type="text" size="small" danger icon={<DeleteOutlined />} />
             </Tooltip>
           </Popconfirm>
         </Space>
@@ -171,10 +162,10 @@ export default function ScriptManager() {
           <span>脚本管理</span>
         </Space>
       }
-      subTitle="管理浏览器注入脚本（Tampermonkey 兼容）"
+      subTitle="管理 UserScript 脚本"
       extra={
         <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-          新建脚本
+          添加脚本
         </Button>
       }
     >
@@ -191,7 +182,7 @@ export default function ScriptManager() {
                 <span>
                   暂无脚本
                   <br />
-                  <small style={{ color: '#999' }}>点击"新建脚本"添加用户脚本</small>
+                  <small style={{ color: '#999' }}>添加 UserScript 增强浏览器功能</small>
                 </span>
               }
             />
@@ -200,7 +191,7 @@ export default function ScriptManager() {
       />
 
       <Modal
-        title={editingScript ? '编辑脚本' : '新建脚本'}
+        title={editingScript ? '编辑脚本' : '添加脚本'}
         open={modalOpen}
         onOk={handleSave}
         onCancel={() => {
@@ -218,15 +209,14 @@ export default function ScriptManager() {
             label="脚本名称"
             rules={[{ required: true, message: '请输入脚本名称' }]}
           >
-            <Input placeholder="例如：自动签到脚本" />
+            <Input placeholder="请输入脚本名称" />
           </Form.Item>
           <Form.Item
             name="match"
-            label="匹配网址"
-            rules={[{ required: true, message: '请输入匹配规则' }]}
-            extra="使用 @match 格式，如 https://*.example.com/*"
+            label="匹配规则"
+            extra="留空则对所有页面生效，支持 * 通配符"
           >
-            <Input placeholder="https://*.example.com/*" />
+            <Input placeholder="https://example.com/*" />
           </Form.Item>
           <Form.Item
             name="code"
@@ -234,18 +224,10 @@ export default function ScriptManager() {
             rules={[{ required: true, message: '请输入脚本代码' }]}
           >
             <Input.TextArea
-              placeholder="// ==UserScript==
-// @name     My Script
-// @match    https://*.example.com/*
-// ==/UserScript==
-
-console.log('Hello from userscript!');"
-              rows={10}
+              placeholder={`// ==UserScript==\n// @name     My Script\n// @match    https://example.com/*\n// ==/UserScript==\n\nconsole.log('Hello!');`}
+              rows={12}
               style={{ fontFamily: 'monospace' }}
             />
-          </Form.Item>
-          <Form.Item name="enabled" label="启用" valuePropName="checked">
-            <Switch checkedChildren="启用" unCheckedChildren="禁用" />
           </Form.Item>
         </Form>
       </Modal>
