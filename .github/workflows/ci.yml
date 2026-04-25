@@ -48,7 +48,7 @@ jobs:
             artifact_name: linux-build
             artifact_path: dist/
           - os: windows-latest
-            build_cmd: npm run build
+            build_cmd: npx electron-builder --win --publish never
             artifact_name: windows-installer
             artifact_path: dist/*.exe
           - os: macos-latest
@@ -61,6 +61,7 @@ jobs:
         with:
           node-version: 18
       - run: npm install --no-audit --no-fund
+      - run: npm run build:vite
       - run: ${{ matrix.build_cmd }}
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
