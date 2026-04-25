@@ -52,9 +52,10 @@ function registerDownloadHandlers() {
         id: taskId,
         url,
         savePath: finalPath,
-        fileName,
-        fileSize: 0,
+        filename: fileName,
+        totalSize: 0,
         downloadedSize: 0,
+        progress: 0,
         status: 'pending',
         createdAt: Date.now(),
         completedAt: null,
@@ -175,7 +176,7 @@ function startDownload(taskId, url, savePath, webContents, startByte = 0) {
     const fileSize = parseInt(response.headers['content-length'] || '0') + startByte;
     const fileStream = fs.createWriteStream(savePath, { flags: startByte > 0 ? 'a' : 'w' });
 
-    updateTaskField(taskId, 'fileSize', fileSize);
+    updateTaskField(taskId, "totalSize", fileSize);
     updateTaskStatus(taskId, 'downloading');
 
     let downloadedSize = startByte;
@@ -191,9 +192,9 @@ function startDownload(taskId, url, savePath, webContents, startByte = 0) {
       // 推送进度到渲染进程
       if (webContents && !webContents.isDestroyed()) {
         webContents.send('download-progress', {
-          taskId,
+          id: taskId,
           downloadedSize,
-          fileSize,
+          totalSize: fileSize,
           progress,
         });
       }
@@ -207,7 +208,7 @@ function startDownload(taskId, url, savePath, webContents, startByte = 0) {
 
       // 推送完成通知
       if (webContents && !webContents.isDestroyed()) {
-        webContents.send('download-completed', { taskId, path: savePath });
+        webContents.send('download-completed', { id: taskId, filename: path.basename(savePath), path: savePath });
       }
       log.info(`下载完成: ${taskId}`);
     });

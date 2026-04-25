@@ -6,13 +6,17 @@ const store = new Store({ name: 'settings' });
 
 // 默认设置
 const DEFAULTS = {
-  defaultDownloadPath: './downloads',
-  maxHistoryItems: 100,
+  homepage: 'about:blank',
+  searchEngine: 'baidu',
+  maxHistory: 100,
+  darkMode: false,
+  fontSize: 'medium',
+  downloadPath: '',
+  autoClassify: false,
   autoStart: false,
   closeToTray: true,
   enableNotification: true,
   enableScripts: true,
-  homePage: 'about:blank',
 };
 
 /**

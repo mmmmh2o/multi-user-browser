@@ -38,7 +38,7 @@ function registerScriptHandlers() {
           id: uuidv4(),
           userId: script.userId,
           name: script.name,
-          url: script.url || '',
+          match: script.match || '',
           code: script.code || '',
           enabled: script.enabled || false,
           createdAt: now,

@@ -51,6 +51,20 @@ function registerHistoryHandlers() {
     }
   });
 
+  // 删除单条历史
+  ipcMain.handle('delete-history', async (event, historyId) => {
+    try {
+      let history = store.get('history', []);
+      history = history.filter((h) => h.id !== historyId);
+      store.set('history', history);
+      log.info(`删除历史: ${historyId}`);
+      return history;
+    } catch (error) {
+      log.error('删除历史失败:', error);
+      return store.get('history', []);
+    }
+  });
+
   // 清空历史记录
   ipcMain.handle('clear-history', async () => {
     try {
