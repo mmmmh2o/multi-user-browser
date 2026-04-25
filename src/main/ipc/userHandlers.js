@@ -1,9 +1,16 @@
 const { ipcMain } = require('electron');
-const Store = require('electron-store');
+
 const { v4: uuidv4 } = require('uuid');
 const log = require('electron-log');
 
-const store = new Store({ name: 'users' });
+let _store = null;
+function getStore() {
+  if (!_store) {
+    const Store = require('electron-store');
+    _store = new Store({ name: 'users' });
+  }
+  return _store;
+}
 
 /**
  * 用户管理 IPC Handler
@@ -12,7 +19,7 @@ function registerUserHandlers() {
   // 获取所有用户
   ipcMain.handle('get-users', async () => {
     try {
-      const users = store.get('users', []);
+      const users = getStore().get('users', []);
       log.debug(`获取用户列表: ${users.length} 个用户`);
       return users;
     } catch (error) {
@@ -24,7 +31,7 @@ function registerUserHandlers() {
   // 保存用户（新建或更新）
   ipcMain.handle('save-user', async (event, user) => {
     try {
-      const users = store.get('users', []);
+      const users = getStore().get('users', []);
       const now = Date.now();
 
       if (user.id) {
@@ -52,7 +59,7 @@ function registerUserHandlers() {
         log.info(`新建用户: ${newUser.id} (${newUser.name})`);
       }
 
-      store.set('users', users);
+      getStore().set('users', users);
       return user.id ? users.find((u) => u.id === user.id) : users[users.length - 1];
     } catch (error) {
       log.error('保存用户失败:', error);
@@ -63,15 +70,15 @@ function registerUserHandlers() {
   // 删除用户
   ipcMain.handle('delete-user', async (event, userId) => {
     try {
-      let users = store.get('users', []);
+      let users = getStore().get('users', []);
       const before = users.length;
       users = users.filter((u) => u.id !== userId);
-      store.set('users', users);
+      getStore().set('users', users);
       log.info(`删除用户: ${userId} (剩余 ${users.length} 个)`);
       return users;
     } catch (error) {
       log.error('删除用户失败:', error);
-      return store.get('users', []);
+      return getStore().get('users', []);
     }
   });
 }

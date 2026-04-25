@@ -50,17 +50,26 @@ export default function DownloadManager() {
 
   useEffect(() => {
     loadDownloads();
-    window.electronAPI?.onDownloadProgress?.((data) => {
+
+    const handleProgress = (data) => {
       setDownloads((prev) =>
         prev.map((d) => (d.id === data.id ? { ...d, ...data } : d))
       );
-    });
-    window.electronAPI?.onDownloadCompleted?.((data) => {
+    };
+    const handleCompleted = (data) => {
       setDownloads((prev) =>
         prev.map((d) => (d.id === data.id ? { ...d, ...data } : d))
       );
       message.success(`下载完成: ${data.filename || data.url}`);
-    });
+    };
+
+    window.electronAPI?.onDownloadProgress?.(handleProgress);
+    window.electronAPI?.onDownloadCompleted?.(handleCompleted);
+
+    return () => {
+      window.electronAPI?.removeAllListeners?.('download-progress');
+      window.electronAPI?.removeAllListeners?.('download-completed');
+    };
   }, []);
 
   const handleAdd = async () => {

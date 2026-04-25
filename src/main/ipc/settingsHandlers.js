@@ -1,8 +1,15 @@
 const { ipcMain } = require('electron');
-const Store = require('electron-store');
+
 const log = require('electron-log');
 
-const store = new Store({ name: 'settings' });
+let _store = null;
+function getStore() {
+  if (!_store) {
+    const Store = require('electron-store');
+    _store = new Store({ name: 'settings' });
+  }
+  return _store;
+}
 
 // 默认设置
 const DEFAULTS = {
@@ -26,7 +33,7 @@ function registerSettingsHandlers() {
   // 获取设置
   ipcMain.handle('get-settings', async () => {
     try {
-      return { ...DEFAULTS, ...store.store };
+      return { ...DEFAULTS, ...getStore().store };
     } catch (error) {
       log.error('获取设置失败:', error);
       return DEFAULTS;
@@ -36,8 +43,8 @@ function registerSettingsHandlers() {
   // 保存设置
   ipcMain.handle('save-settings', async (event, settings) => {
     try {
-      const merged = { ...DEFAULTS, ...store.store, ...settings };
-      store.store = merged;
+      const merged = { ...DEFAULTS, ...getStore().store, ...settings };
+      getStore().store = merged;
       log.info('设置已保存');
       return { success: true, settings: merged };
     } catch (error) {
@@ -49,7 +56,7 @@ function registerSettingsHandlers() {
   // 重置设置
   ipcMain.handle('reset-settings', async () => {
     try {
-      store.store = DEFAULTS;
+      getStore().store = DEFAULTS;
       log.info('设置已重置');
       return { success: true, settings: DEFAULTS };
     } catch (error) {

@@ -25,7 +25,8 @@ function registerFileHandlers() {
   // 获取文件列表
   ipcMain.handle('get-files', async (event, dirPath) => {
     try {
-      const safePath = validatePath(dirPath);
+      const targetDir = dirPath || os.homedir();
+      const safePath = validatePath(targetDir);
       const entries = await fs.readdir(safePath, { withFileTypes: true });
       const files = await Promise.all(
         entries.map(async (entry) => {

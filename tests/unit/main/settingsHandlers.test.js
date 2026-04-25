@@ -46,27 +46,31 @@ describe('settingsHandlers', () => {
 
   test('get-settings returns defaults when empty', async () => {
     const result = await handlers['get-settings']();
-    expect(result).toHaveProperty('defaultDownloadPath', './downloads');
-    expect(result).toHaveProperty('maxHistoryItems', 100);
+    expect(result).toHaveProperty('homepage', 'about:blank');
+    expect(result).toHaveProperty('searchEngine', 'baidu');
+    expect(result).toHaveProperty('maxHistory', 100);
+    expect(result).toHaveProperty('darkMode', false);
+    expect(result).toHaveProperty('fontSize', 'medium');
+    expect(result).toHaveProperty('downloadPath', '');
+    expect(result).toHaveProperty('autoClassify', false);
     expect(result).toHaveProperty('autoStart', false);
     expect(result).toHaveProperty('closeToTray', true);
     expect(result).toHaveProperty('enableNotification', true);
     expect(result).toHaveProperty('enableScripts', true);
-    expect(result).toHaveProperty('homePage', 'about:blank');
   });
 
   test('save-settings merges with existing', async () => {
-    const result = await handlers['save-settings'](null, { maxHistoryItems: 200 });
+    const result = await handlers['save-settings'](null, { maxHistory: 200 });
     expect(result.success).toBe(true);
-    expect(result.settings.maxHistoryItems).toBe(200);
+    expect(result.settings.maxHistory).toBe(200);
     expect(result.settings.autoStart).toBe(false); // default preserved
   });
 
   test('reset-settings restores defaults', async () => {
-    await handlers['save-settings'](null, { autoStart: true, maxHistoryItems: 500 });
+    await handlers['save-settings'](null, { autoStart: true, maxHistory: 500 });
     const result = await handlers['reset-settings']();
     expect(result.success).toBe(true);
     expect(result.settings.autoStart).toBe(false);
-    expect(result.settings.maxHistoryItems).toBe(100);
+    expect(result.settings.maxHistory).toBe(100);
   });
 });

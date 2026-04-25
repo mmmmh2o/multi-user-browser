@@ -1,9 +1,16 @@
 const { ipcMain } = require('electron');
-const Store = require('electron-store');
+
 const { v4: uuidv4 } = require('uuid');
 const log = require('electron-log');
 
-const store = new Store({ name: 'history' });
+let _store = null;
+function getStore() {
+  if (!_store) {
+    const Store = require('electron-store');
+    _store = new Store({ name: 'history' });
+  }
+  return _store;
+}
 
 const MAX_HISTORY = 100;
 
@@ -14,7 +21,7 @@ function registerHistoryHandlers() {
   // 获取历史记录
   ipcMain.handle('get-history', async () => {
     try {
-      return store.get('history', []);
+      return getStore().get('history', []);
     } catch (error) {
       log.error('获取历史记录失败:', error);
       return [];
@@ -24,7 +31,7 @@ function registerHistoryHandlers() {
   // 添加历史记录
   ipcMain.handle('add-history', async (event, entry) => {
     try {
-      const history = store.get('history', []);
+      const history = getStore().get('history', []);
 
       const newEntry = {
         id: uuidv4(),
@@ -42,7 +49,7 @@ function registerHistoryHandlers() {
         history.splice(MAX_HISTORY);
       }
 
-      store.set('history', history);
+      getStore().set('history', history);
       log.debug(`添加历史: ${entry.title}`);
       return { success: true };
     } catch (error) {
@@ -54,21 +61,21 @@ function registerHistoryHandlers() {
   // 删除单条历史
   ipcMain.handle('delete-history', async (event, historyId) => {
     try {
-      let history = store.get('history', []);
+      let history = getStore().get('history', []);
       history = history.filter((h) => h.id !== historyId);
-      store.set('history', history);
+      getStore().set('history', history);
       log.info(`删除历史: ${historyId}`);
       return history;
     } catch (error) {
       log.error('删除历史失败:', error);
-      return store.get('history', []);
+      return getStore().get('history', []);
     }
   });
 
   // 清空历史记录
   ipcMain.handle('clear-history', async () => {
     try {
-      store.set('history', []);
+      getStore().set('history', []);
       log.info('历史记录已清空');
       return { success: true };
     } catch (error) {

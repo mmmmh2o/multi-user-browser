@@ -1,5 +1,4 @@
 const { ipcMain } = require('electron');
-const Store = require('electron-store');
 const { v4: uuidv4 } = require('uuid');
 const https = require('https');
 const http = require('http');
@@ -7,10 +6,18 @@ const fs = require('fs');
 const path = require('path');
 const log = require('electron-log');
 
-const store = new Store({ name: 'downloads' });
-
 // 活跃的下载任务
 const activeDownloads = new Map();
+
+// 延迟初始化 store
+let store = null;
+function getStore() {
+  if (!store) {
+    const Store = require('electron-store');
+    store = new Store({ name: 'downloads' });
+  }
+  return store;
+}
 
 /**
  * 文件自动分类
@@ -62,9 +69,9 @@ function registerDownloadHandlers() {
       };
 
       // 保存任务
-      const tasks = store.get('tasks', []);
+      const tasks = getStore().get('tasks', []);
       tasks.push(task);
-      store.set('tasks', tasks);
+      getStore().set('tasks', tasks);
 
       // 开始下载
       startDownload(taskId, url, finalPath, event.sender);
@@ -98,7 +105,7 @@ function registerDownloadHandlers() {
   // 恢复下载
   ipcMain.handle('resume-download', async (event, taskId) => {
     try {
-      const tasks = store.get('tasks', []);
+      const tasks = getStore().get('tasks', []);
       const task = tasks.find((t) => t.id === taskId);
       if (task) {
         startDownload(taskId, task.url, task.savePath, event.sender, task.downloadedSize);
@@ -122,14 +129,14 @@ function registerDownloadHandlers() {
         activeDownloads.delete(taskId);
       }
       // 删除部分下载的文件
-      const tasks = store.get('tasks', []);
+      const tasks = getStore().get('tasks', []);
       const task = tasks.find((t) => t.id === taskId);
       if (task && fs.existsSync(task.savePath)) {
         fs.unlinkSync(task.savePath);
       }
       // 从任务列表移除
       const updated = tasks.filter((t) => t.id !== taskId);
-      store.set('tasks', updated);
+      getStore().set('tasks', updated);
       log.info(`取消下载: ${taskId}`);
       return { success: true };
     } catch (error) {
@@ -141,7 +148,7 @@ function registerDownloadHandlers() {
   // 获取所有下载任务
   ipcMain.handle('get-downloads', async () => {
     try {
-      return store.get('tasks', []);
+      return getStore().get('tasks', []);
     } catch (error) {
       log.error('获取下载列表失败:', error);
       return [];
@@ -176,7 +183,7 @@ function startDownload(taskId, url, savePath, webContents, startByte = 0) {
     const fileSize = parseInt(response.headers['content-length'] || '0') + startByte;
     const fileStream = fs.createWriteStream(savePath, { flags: startByte > 0 ? 'a' : 'w' });
 
-    updateTaskField(taskId, "totalSize", fileSize);
+    updateTaskField(taskId, 'totalSize', fileSize);
     updateTaskStatus(taskId, 'downloading');
 
     let downloadedSize = startByte;
@@ -232,20 +239,20 @@ function startDownload(taskId, url, savePath, webContents, startByte = 0) {
 }
 
 function updateTaskStatus(taskId, status) {
-  const tasks = store.get('tasks', []);
+  const tasks = getStore().get('tasks', []);
   const task = tasks.find((t) => t.id === taskId);
   if (task) {
     task.status = status;
-    store.set('tasks', tasks);
+    getStore().set('tasks', tasks);
   }
 }
 
 function updateTaskField(taskId, field, value) {
-  const tasks = store.get('tasks', []);
+  const tasks = getStore().get('tasks', []);
   const task = tasks.find((t) => t.id === taskId);
   if (task) {
     task[field] = value;
-    store.set('tasks', tasks);
+    getStore().set('tasks', tasks);
   }
 }
 

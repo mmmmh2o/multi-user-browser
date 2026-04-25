@@ -1,9 +1,16 @@
 const { ipcMain } = require('electron');
-const Store = require('electron-store');
+
 const { v4: uuidv4 } = require('uuid');
 const log = require('electron-log');
 
-const store = new Store({ name: 'bookmarks' });
+let _store = null;
+function getStore() {
+  if (!_store) {
+    const Store = require('electron-store');
+    _store = new Store({ name: 'bookmarks' });
+  }
+  return _store;
+}
 
 /**
  * 书签管理 IPC Handler
@@ -12,7 +19,7 @@ function registerBookmarkHandlers() {
   // 获取所有书签
   ipcMain.handle('get-bookmarks', async () => {
     try {
-      return store.get('bookmarks', []);
+      return getStore().get('bookmarks', []);
     } catch (error) {
       log.error('获取书签失败:', error);
       return [];
@@ -22,7 +29,7 @@ function registerBookmarkHandlers() {
   // 保存书签
   ipcMain.handle('save-bookmark', async (event, bookmark) => {
     try {
-      const bookmarks = store.get('bookmarks', []);
+      const bookmarks = getStore().get('bookmarks', []);
       const now = Date.now();
 
       if (bookmark.id) {
@@ -46,7 +53,7 @@ function registerBookmarkHandlers() {
         log.info(`新建书签: ${newBookmark.title}`);
       }
 
-      store.set('bookmarks', bookmarks);
+      getStore().set('bookmarks', bookmarks);
       return bookmark.id
         ? bookmarks.find((b) => b.id === bookmark.id)
         : bookmarks[bookmarks.length - 1];
@@ -59,14 +66,14 @@ function registerBookmarkHandlers() {
   // 删除书签
   ipcMain.handle('delete-bookmark', async (event, bookmarkId) => {
     try {
-      let bookmarks = store.get('bookmarks', []);
+      let bookmarks = getStore().get('bookmarks', []);
       bookmarks = bookmarks.filter((b) => b.id !== bookmarkId);
-      store.set('bookmarks', bookmarks);
+      getStore().set('bookmarks', bookmarks);
       log.info(`删除书签: ${bookmarkId}`);
       return bookmarks;
     } catch (error) {
       log.error('删除书签失败:', error);
-      return store.get('bookmarks', []);
+      return getStore().get('bookmarks', []);
     }
   });
 }

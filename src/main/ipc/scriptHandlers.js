@@ -1,9 +1,16 @@
 const { ipcMain } = require('electron');
-const Store = require('electron-store');
+
 const { v4: uuidv4 } = require('uuid');
 const log = require('electron-log');
 
-const store = new Store({ name: 'scripts' });
+let _store = null;
+function getStore() {
+  if (!_store) {
+    const Store = require('electron-store');
+    _store = new Store({ name: 'scripts' });
+  }
+  return _store;
+}
 
 /**
  * 脚本管理 IPC Handler
@@ -12,7 +19,7 @@ function registerScriptHandlers() {
   // 获取所有脚本
   ipcMain.handle('get-scripts', async () => {
     try {
-      return store.get('scripts', []);
+      return getStore().get('scripts', []);
     } catch (error) {
       log.error('获取脚本失败:', error);
       return [];
@@ -22,7 +29,7 @@ function registerScriptHandlers() {
   // 保存脚本
   ipcMain.handle('save-script', async (event, script) => {
     try {
-      const scripts = store.get('scripts', []);
+      const scripts = getStore().get('scripts', []);
       const now = Date.now();
 
       if (script.id) {
@@ -48,7 +55,7 @@ function registerScriptHandlers() {
         log.info(`新建脚本: ${newScript.name}`);
       }
 
-      store.set('scripts', scripts);
+      getStore().set('scripts', scripts);
       return script.id
         ? scripts.find((s) => s.id === script.id)
         : scripts[scripts.length - 1];
@@ -61,7 +68,7 @@ function registerScriptHandlers() {
   // 获取已启用的脚本（供 webview preload 注入用）
   ipcMain.handle('get-enabled-scripts', async () => {
     try {
-      const scripts = store.get('scripts', []);
+      const scripts = getStore().get('scripts', []);
       return scripts.filter((s) => s.enabled);
     } catch (error) {
       log.error('获取启用脚本失败:', error);
@@ -72,14 +79,14 @@ function registerScriptHandlers() {
   // 删除脚本
   ipcMain.handle('delete-script', async (event, scriptId) => {
     try {
-      let scripts = store.get('scripts', []);
+      let scripts = getStore().get('scripts', []);
       scripts = scripts.filter((s) => s.id !== scriptId);
-      store.set('scripts', scripts);
+      getStore().set('scripts', scripts);
       log.info(`删除脚本: ${scriptId}`);
       return scripts;
     } catch (error) {
       log.error('删除脚本失败:', error);
-      return store.get('scripts', []);
+      return getStore().get('scripts', []);
     }
   });
 }
