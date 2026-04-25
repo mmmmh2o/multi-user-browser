@@ -9,7 +9,7 @@ describe('IPC Handlers 注册验证', () => {
   beforeAll(() => {
     ipcMain.handle.mockClear();
     // 加载所有 handlers
-    require('../../src/main/ipc/index');
+    require('../../../src/main/ipc/index');
   });
 
   test('应注册用户管理 IPC handler', () => {
