@@ -5,11 +5,14 @@ import {
   Button,
   Input,
   Space,
-  Progress,
   Tag,
+  Progress,
+  Empty,
   message,
+  Tooltip,
   Popconfirm,
   Modal,
+  Form,
 } from 'antd';
 import {
   PlusOutlined,
@@ -17,6 +20,7 @@ import {
   PlayCircleOutlined,
   CloseCircleOutlined,
   DownloadOutlined,
+  FolderOutlined,
 } from '@ant-design/icons';
 
 export default function DownloadManager() {
@@ -29,42 +33,44 @@ export default function DownloadManager() {
   const loadDownloads = async () => {
     setLoading(true);
     try {
+      if (!window.electronAPI?.getDownloads) {
+        console.warn('electronAPI.getDownloads 不可用');
+        setDownloads([]);
+        return;
+      }
       const data = await window.electronAPI.getDownloads();
       setDownloads(data || []);
     } catch (error) {
+      console.error('加载下载列表失败:', error);
       message.error('加载下载列表失败');
+      setDownloads([]);
     }
     setLoading(false);
   };
 
   useEffect(() => {
     loadDownloads();
-
     // 监听下载进度
-    window.electronAPI.onDownloadProgress((data) => {
+    window.electronAPI?.onDownloadProgress?.((data) => {
       setDownloads((prev) =>
-        prev.map((task) =>
-          task.id === data.taskId
-            ? { ...task, downloadedSize: data.downloadedSize, progress: data.progress }
-            : task
-        )
+        prev.map((d) => (d.id === data.id ? { ...d, ...data } : d))
       );
     });
-
-    // 监听下载完成
-    window.electronAPI.onDownloadCompleted((data) => {
-      message.success(`下载完成: ${data.path}`);
-      loadDownloads();
+    window.electronAPI?.onDownloadCompleted?.((data) => {
+      setDownloads((prev) =>
+        prev.map((d) => (d.id === data.id ? { ...d, ...data } : d))
+      );
+      message.success(`下载完成: ${data.filename || data.url}`);
     });
   }, []);
 
   const handleAdd = async () => {
     if (!url.trim()) {
-      message.warning('请输入下载地址');
+      message.warning('请输入下载链接');
       return;
     }
     try {
-      await window.electronAPI.addDownload(url, savePath || '.');
+      await window.electronAPI.addDownload(url, savePath || undefined);
       message.success('下载任务已添加');
       setAddModalOpen(false);
       setUrl('');
@@ -75,111 +81,146 @@ export default function DownloadManager() {
     }
   };
 
-  const handlePause = async (taskId) => {
-    await window.electronAPI.pauseDownload(taskId);
-    loadDownloads();
+  const handlePause = async (id) => {
+    try {
+      await window.electronAPI.pauseDownload(id);
+      loadDownloads();
+    } catch (error) {
+      message.error('暂停失败');
+    }
   };
 
-  const handleResume = async (taskId) => {
-    await window.electronAPI.resumeDownload(taskId);
-    loadDownloads();
+  const handleResume = async (id) => {
+    try {
+      await window.electronAPI.resumeDownload(id);
+      loadDownloads();
+    } catch (error) {
+      message.error('恢复失败');
+    }
   };
 
-  const handleCancel = async (taskId) => {
-    await window.electronAPI.cancelDownload(taskId);
-    message.success('下载已取消');
-    loadDownloads();
+  const handleCancel = async (id) => {
+    try {
+      await window.electronAPI.cancelDownload(id);
+      message.success('已取消');
+      loadDownloads();
+    } catch (error) {
+      message.error('取消失败');
+    }
   };
 
   const statusMap = {
-    pending: { color: 'default', text: '等待中' },
     downloading: { color: 'processing', text: '下载中' },
     paused: { color: 'warning', text: '已暂停' },
     completed: { color: 'success', text: '已完成' },
     failed: { color: 'error', text: '失败' },
+    cancelled: { color: 'default', text: '已取消' },
+    pending: { color: 'default', text: '等待中' },
   };
 
   const columns = [
     {
       title: '文件名',
-      dataIndex: 'fileName',
+      dataIndex: 'filename',
       ellipsis: true,
+      render: (name, record) => name || record.url,
     },
     {
       title: '进度',
-      width: 200,
-      render: (_, record) => (
-        <Progress
-          percent={record.progress || 0}
-          size="small"
-          status={record.status === 'failed' ? 'exception' : record.status === 'completed' ? 'success' : 'active'}
-        />
-      ),
+      dataIndex: 'progress',
+      width: 160,
+      render: (progress, record) => {
+        const status = record.status || 'pending';
+        const percent = Math.round(progress || 0);
+        return (
+          <Progress
+            percent={percent}
+            size="small"
+            status={status === 'failed' ? 'exception' : status === 'completed' ? 'success' : 'active'}
+          />
+        );
+      },
     },
     {
       title: '状态',
       dataIndex: 'status',
       width: 100,
       render: (status) => {
-        const s = statusMap[status] || { color: 'default', text: status };
-        return <Tag color={s.color}>{s.text}</Tag>;
+        const info = statusMap[status] || statusMap.pending;
+        return <Tag color={info.color}>{info.text}</Tag>;
       },
     },
     {
       title: '大小',
-      width: 120,
-      render: (_, record) => {
-        const formatSize = (bytes) => {
-          if (!bytes) return '-';
-          const units = ['B', 'KB', 'MB', 'GB'];
-          const i = Math.floor(Math.log(bytes) / Math.log(1024));
-          return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
-        };
-        return `${formatSize(record.downloadedSize)} / ${formatSize(record.fileSize)}`;
+      dataIndex: 'totalSize',
+      width: 100,
+      render: (size) => {
+        if (!size) return '-';
+        if (size < 1024) return `${size} B`;
+        if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+        return `${(size / (1024 * 1024)).toFixed(1)} MB`;
       },
     },
     {
       title: '操作',
       width: 180,
-      render: (_, record) => (
-        <Space>
-          {record.status === 'downloading' && (
-            <Button
-              type="link"
-              size="small"
-              icon={<PauseCircleOutlined />}
-              onClick={() => handlePause(record.id)}
-            >
-              暂停
-            </Button>
-          )}
-          {record.status === 'paused' && (
-            <Button
-              type="link"
-              size="small"
-              icon={<PlayCircleOutlined />}
-              onClick={() => handleResume(record.id)}
-            >
-              恢复
-            </Button>
-          )}
-          {record.status !== 'completed' && (
-            <Popconfirm title="确定取消？" onConfirm={() => handleCancel(record.id)}>
-              <Button type="link" size="small" danger icon={<CloseCircleOutlined />}>
-                取消
-              </Button>
-            </Popconfirm>
-          )}
-        </Space>
-      ),
+      render: (_, record) => {
+        const status = record.status || 'pending';
+        return (
+          <Space>
+            {status === 'downloading' && (
+              <Tooltip title="暂停">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<PauseCircleOutlined />}
+                  onClick={() => handlePause(record.id)}
+                />
+              </Tooltip>
+            )}
+            {status === 'paused' && (
+              <Tooltip title="继续">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<PlayCircleOutlined />}
+                  onClick={() => handleResume(record.id)}
+                />
+              </Tooltip>
+            )}
+            {['downloading', 'paused', 'pending'].includes(status) && (
+              <Popconfirm title="确定取消此下载？" onConfirm={() => handleCancel(record.id)}>
+                <Tooltip title="取消">
+                  <Button
+                    type="text"
+                    size="small"
+                    danger
+                    icon={<CloseCircleOutlined />}
+                  />
+                </Tooltip>
+              </Popconfirm>
+            )}
+          </Space>
+        );
+      },
     },
   ];
 
   return (
     <Card
-      title="下载管理器"
+      title={
+        <Space>
+          <DownloadOutlined />
+          <span>下载管理</span>
+        </Space>
+      }
+      subTitle="管理下载任务"
       extra={
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => setAddModalOpen(true)}>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => setAddModalOpen(true)}
+        >
           新建下载
         </Button>
       }
@@ -189,8 +230,20 @@ export default function DownloadManager() {
         dataSource={downloads}
         rowKey="id"
         loading={loading}
-        pagination={false}
-        size="small"
+        pagination={{ pageSize: 10, showTotal: (t) => `共 ${t} 个任务` }}
+        locale={{
+          emptyText: (
+            <Empty
+              description={
+                <span>
+                  暂无下载任务
+                  <br />
+                  <small style={{ color: '#999' }}>点击"新建下载"添加任务</small>
+                </span>
+              }
+            />
+          ),
+        }}
       />
 
       <Modal
@@ -199,20 +252,25 @@ export default function DownloadManager() {
         onOk={handleAdd}
         onCancel={() => setAddModalOpen(false)}
         okText="开始下载"
+        cancelText="取消"
       >
-        <Space direction="vertical" style={{ width: '100%' }}>
-          <Input
-            placeholder="下载地址 (https://...)"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            prefix={<DownloadOutlined />}
-          />
-          <Input
-            placeholder="保存目录（默认当前目录）"
-            value={savePath}
-            onChange={(e) => setSavePath(e.target.value)}
-          />
-        </Space>
+        <Form layout="vertical">
+          <Form.Item label="下载链接" required>
+            <Input
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://example.com/file.zip"
+            />
+          </Form.Item>
+          <Form.Item label="保存路径（可选）">
+            <Input
+              value={savePath}
+              onChange={(e) => setSavePath(e.target.value)}
+              placeholder="默认保存到 Downloads 文件夹"
+              prefix={<FolderOutlined />}
+            />
+          </Form.Item>
+        </Form>
       </Modal>
     </Card>
   );
