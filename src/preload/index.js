@@ -2,20 +2,17 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 /**
  * Preload 脚本 - 通过 contextBridge 安全暴露 API 给渲染进程
+ *
+ * 注意：sandbox 模式下只能使用 require('electron')，
+ * 其他 Node.js 模块（path, fs 等）不可用！
  */
 
-console.log('[Preload] 脚本开始执行');
-
-// 暴露 webview preload 路径（兼容 sandbox 模式下 __dirname 可能为 undefined）
-try {
-  const path = require('path');
-  const preloadDir = __dirname || path.dirname(__filename) || '';
-  const webviewPreloadPath = path.join(preloadDir, '../main/preload/webview-preload.js');
-  contextBridge.exposeInMainWorld('__MUB_PRELOAD_PATH__', webviewPreloadPath);
-} catch (e) {
-  console.error('[Preload] 设置 webview preload 路径失败:', e);
+// 暴露 webview preload 路径（sandbox 下不用 path 模块，用 ipc 向主进程要）
+ipcRenderer.invoke('__get-webview-preload-path__').then((p) => {
+  contextBridge.exposeInMainWorld('__MUB_PRELOAD_PATH__', p || '');
+}).catch(() => {
   contextBridge.exposeInMainWorld('__MUB_PRELOAD_PATH__', '');
-}
+});
 
 // 安全包装 invoke
 function safeInvoke(channel, ...args) {
@@ -94,6 +91,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 });
 
-// 标记 preload 加载成功，方便渲染进程诊断
+// 标记 preload 加载成功
 contextBridge.exposeInMainWorld('__MUB_PRELOAD_READY__', true);
-console.log('[Preload] electronAPI 已注册，preload 加载完成');

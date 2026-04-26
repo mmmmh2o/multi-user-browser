@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const log = require('electron-log');
 const { registerAllHandlers } = require('./ipc');
@@ -46,6 +46,15 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  // 提供 webview preload 路径（sandbox 下 preload 无法用 require('path')）
+  ipcMain.handle('__get-webview-preload-path__', () => {
+    try {
+      return path.join(__dirname, '../main/preload/webview-preload.js');
+    } catch {
+      return '';
+    }
+  });
+
   registerAllHandlers();
   log.info('所有 IPC Handler 已注册');
 
