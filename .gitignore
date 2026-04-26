@@ -36,3 +36,6 @@ release/
 # Temp
 tmp/
 temp/
+
+# aria2c binary (downloaded by postinstall)
+resources/aria2/

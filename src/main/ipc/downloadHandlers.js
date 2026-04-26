@@ -1,16 +1,14 @@
 const { ipcMain } = require('electron');
 const { v4: uuidv4 } = require('uuid');
-const https = require('https');
-const http = require('http');
-const fs = require('fs');
 const path = require('path');
 const log = require('electron-log');
+const aria2 = require('../utils/aria2Manager');
 
-// 活跃的下载任务
-const activeDownloads = new Map();
-
-// 延迟初始化 store
+// 任务映射: taskId → { gid, ... }
+const taskMap = new Map();
 let store = null;
+let pollTimer = null;
+
 function getStore() {
   if (!store) {
     const Store = require('electron-store');
@@ -19,9 +17,6 @@ function getStore() {
   return store;
 }
 
-/**
- * 文件自动分类
- */
 function classifyFile(fileName) {
   const ext = path.extname(fileName).toLowerCase();
   const categories = {
@@ -37,46 +32,146 @@ function classifyFile(fileName) {
   return 'other';
 }
 
+function aria2StatusToTaskStatus(aria2Status) {
+  const map = {
+    active: 'downloading',
+    waiting: 'pending',
+    paused: 'paused',
+    error: 'failed',
+    complete: 'completed',
+    removed: 'cancelled',
+  };
+  return map[aria2Status] || 'pending';
+}
+
 /**
- * 下载管理 IPC Handler
+ * 启动进度轮询
  */
+function startProgressPoller(webContents) {
+  if (pollTimer) return;
+  pollTimer = setInterval(async () => {
+    try {
+      const active = await aria2.tellActive();
+      for (const item of active) {
+        for (const [taskId, info] of taskMap.entries()) {
+          if (info.gid === item.gid || info.gid === item.following) {
+            const downloadedSize = parseInt(item.completedLength || '0');
+            const totalSize = parseInt(item.totalLength || '0');
+            const progress = totalSize > 0 ? Math.round((downloadedSize / totalSize) * 100) : 0;
+            const speed = parseInt(item.downloadSpeed || '0');
+
+            updateTaskField(taskId, 'downloadedSize', downloadedSize);
+            updateTaskField(taskId, 'totalSize', totalSize);
+            updateTaskField(taskId, 'progress', progress);
+            updateTaskField(taskId, 'speed', speed);
+            updateTaskStatus(taskId, 'downloading');
+
+            if (webContents && !webContents.isDestroyed()) {
+              webContents.send('download-progress', {
+                id: taskId,
+                downloadedSize,
+                totalSize,
+                progress,
+                speed,
+              });
+            }
+          }
+        }
+      }
+
+      // 检查已完成/失败的任务
+      const stopped = await aria2.rpcCall('aria2.tellStopped', [0, 100]);
+      for (const item of stopped) {
+        for (const [taskId, info] of taskMap.entries()) {
+          if (info.gid === item.gid) {
+            const status = aria2StatusToTaskStatus(item.status);
+            if (info.notified) continue;
+
+            updateTaskStatus(taskId, status);
+            info.notified = true;
+
+            if (status === 'completed') {
+              const filename = item.files && item.files[0] && item.files[0].path
+                ? path.basename(item.files[0].path)
+                : info.filename;
+              updateTaskField(taskId, 'completedAt', Date.now());
+              if (webContents && !webContents.isDestroyed()) {
+                webContents.send('download-completed', {
+                  id: taskId,
+                  filename,
+                  path: item.files && item.files[0] && item.files[0].path,
+                });
+              }
+              log.info(`下载完成: ${taskId} (${item.gid})`);
+            } else if (status === 'failed') {
+              if (webContents && !webContents.isDestroyed()) {
+                webContents.send('download-progress', {
+                  id: taskId,
+                  downloadedSize: parseInt(item.completedLength || '0'),
+                  totalSize: parseInt(item.totalLength || '0'),
+                  progress: 0,
+                  status: 'failed',
+                  error: item.errorMessage || '下载失败',
+                });
+              }
+              log.error(`下载失败: ${taskId} - ${item.errorMessage}`);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      log.debug('进度轮询错误:', err.message);
+    }
+  }, 1000);
+}
+
+function stopProgressPoller() {
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+}
+
 function registerDownloadHandlers() {
   // 添加下载任务
   ipcMain.handle('add-download', async (event, url, savePath) => {
     try {
       const taskId = uuidv4();
-      const fileName = path.basename(new URL(url).pathname) || `download_${taskId}`;
+      const urlObj = new URL(url);
+      const fileName = path.basename(urlObj.pathname) || `download_${taskId}`;
       const category = classifyFile(fileName);
-      const finalDir = path.join(savePath, category);
-      const finalPath = path.join(finalDir, fileName);
 
-      // 确保目录存在
-      if (!fs.existsSync(finalDir)) {
-        fs.mkdirSync(finalDir, { recursive: true });
-      }
+      // 构造分类子目录路径，传给 aria2
+      const downloadBase = aria2.getDownloadDir();
+      const categoryDir = path.join(downloadBase, category);
+      const aria2Gid = await aria2.addDownload(url, fileName, categoryDir);
 
       const task = {
         id: taskId,
         url,
-        savePath: finalPath,
+        savePath: path.join(categoryDir, fileName),
         filename: fileName,
         totalSize: 0,
         downloadedSize: 0,
         progress: 0,
+        speed: 0,
         status: 'pending',
         createdAt: Date.now(),
         completedAt: null,
       };
 
-      // 保存任务
+      // 保存任务映射
+      taskMap.set(taskId, { gid: aria2Gid, filename: fileName, notified: false });
+
+      // 持久化
       const tasks = getStore().get('tasks', []);
       tasks.push(task);
       getStore().set('tasks', tasks);
 
-      // 开始下载
-      startDownload(taskId, url, finalPath, event.sender);
+      // 启动轮询
+      startProgressPoller(event.sender);
 
-      log.info(`添加下载: ${fileName} → ${finalPath}`);
+      log.info(`添加下载: ${fileName} → aria2 GID=${aria2Gid}`);
       return task;
     } catch (error) {
       log.error('添加下载失败:', error);
@@ -87,15 +182,13 @@ function registerDownloadHandlers() {
   // 暂停下载
   ipcMain.handle('pause-download', async (event, taskId) => {
     try {
-      const download = activeDownloads.get(taskId);
-      if (download) {
-        download.paused = true;
-        download.request.destroy();
-        updateTaskStatus(taskId, 'paused');
-        log.info(`暂停下载: ${taskId}`);
-        return { success: true };
-      }
-      return { success: false, error: '任务不存在或未在下载中' };
+      const info = taskMap.get(taskId);
+      if (!info) return { success: false, error: '任务不存在' };
+
+      await aria2.pause(info.gid);
+      updateTaskStatus(taskId, 'paused');
+      log.info(`暂停下载: ${taskId}`);
+      return { success: true };
     } catch (error) {
       log.error('暂停下载失败:', error);
       return { success: false, error: error.message };
@@ -105,15 +198,14 @@ function registerDownloadHandlers() {
   // 恢复下载
   ipcMain.handle('resume-download', async (event, taskId) => {
     try {
-      const tasks = getStore().get('tasks', []);
-      const task = tasks.find((t) => t.id === taskId);
-      if (task) {
-        startDownload(taskId, task.url, task.savePath, event.sender, task.downloadedSize);
-        updateTaskStatus(taskId, 'downloading');
-        log.info(`恢复下载: ${taskId}`);
-        return { success: true };
-      }
-      return { success: false, error: '任务不存在' };
+      const info = taskMap.get(taskId);
+      if (!info) return { success: false, error: '任务不存在' };
+
+      await aria2.unpause(info.gid);
+      updateTaskStatus(taskId, 'downloading');
+      startProgressPoller(event.sender);
+      log.info(`恢复下载: ${taskId}`);
+      return { success: true };
     } catch (error) {
       log.error('恢复下载失败:', error);
       return { success: false, error: error.message };
@@ -123,20 +215,16 @@ function registerDownloadHandlers() {
   // 取消下载
   ipcMain.handle('cancel-download', async (event, taskId) => {
     try {
-      const download = activeDownloads.get(taskId);
-      if (download) {
-        download.request.destroy();
-        activeDownloads.delete(taskId);
+      const info = taskMap.get(taskId);
+      if (info) {
+        await aria2.remove(info.gid).catch(() => {});
+        taskMap.delete(taskId);
       }
-      // 删除部分下载的文件
+
       const tasks = getStore().get('tasks', []);
-      const task = tasks.find((t) => t.id === taskId);
-      if (task && fs.existsSync(task.savePath)) {
-        fs.unlinkSync(task.savePath);
-      }
-      // 从任务列表移除
       const updated = tasks.filter((t) => t.id !== taskId);
       getStore().set('tasks', updated);
+
       log.info(`取消下载: ${taskId}`);
       return { success: true };
     } catch (error) {
@@ -148,94 +236,36 @@ function registerDownloadHandlers() {
   // 获取所有下载任务
   ipcMain.handle('get-downloads', async () => {
     try {
-      return getStore().get('tasks', []);
+      const tasks = getStore().get('tasks', []);
+
+      // 补充 aria2 实时状态
+      try {
+        const active = await aria2.tellActive();
+        for (const task of tasks) {
+          const info = taskMap.get(task.id);
+          if (!info) continue;
+          const aria2Task = active.find(
+            (a) => a.gid === info.gid || a.following === info.gid
+          );
+          if (aria2Task) {
+            task.downloadedSize = parseInt(aria2Task.completedLength || '0');
+            task.totalSize = parseInt(aria2Task.totalLength || '0');
+            task.speed = parseInt(aria2Task.downloadSpeed || '0');
+            task.progress =
+              task.totalSize > 0
+                ? Math.round((task.downloadedSize / task.totalSize) * 100)
+                : 0;
+          }
+        }
+      } catch {
+        // aria2 可能未启动，返回持久化数据
+      }
+
+      return tasks;
     } catch (error) {
       log.error('获取下载列表失败:', error);
       return [];
     }
-  });
-}
-
-/**
- * 开始下载
- */
-function startDownload(taskId, url, savePath, webContents, startByte = 0) {
-  const protocol = url.startsWith('https') ? https : http;
-  const options = {};
-
-  if (startByte > 0) {
-    options.headers = { Range: `bytes=${startByte}-` };
-  }
-
-  const request = protocol.get(url, options, (response) => {
-    // 处理重定向
-    if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
-      startDownload(taskId, response.headers.location, savePath, webContents, startByte);
-      return;
-    }
-
-    if (response.statusCode !== 200 && response.statusCode !== 206) {
-      updateTaskStatus(taskId, 'failed');
-      log.error(`下载失败: HTTP ${response.statusCode}`);
-      return;
-    }
-
-    const fileSize = parseInt(response.headers['content-length'] || '0') + startByte;
-    const fileStream = fs.createWriteStream(savePath, { flags: startByte > 0 ? 'a' : 'w' });
-
-    updateTaskField(taskId, 'totalSize', fileSize);
-    updateTaskStatus(taskId, 'downloading');
-
-    let downloadedSize = startByte;
-
-    response.on('data', (chunk) => {
-      downloadedSize += chunk.length;
-      fileStream.write(chunk);
-
-      // 更新进度
-      const progress = fileSize > 0 ? Math.round((downloadedSize / fileSize) * 100) : 0;
-      updateTaskField(taskId, 'downloadedSize', downloadedSize);
-      updateTaskField(taskId, 'progress', progress);
-
-      // 推送进度到渲染进程
-      if (webContents && !webContents.isDestroyed()) {
-        webContents.send('download-progress', {
-          id: taskId,
-          downloadedSize,
-          totalSize: fileSize,
-          progress,
-        });
-      }
-    });
-
-    response.on('end', () => {
-      fileStream.end();
-      updateTaskStatus(taskId, 'completed');
-      updateTaskField(taskId, 'completedAt', Date.now());
-      activeDownloads.delete(taskId);
-
-      // 推送完成通知
-      if (webContents && !webContents.isDestroyed()) {
-        webContents.send('download-completed', { id: taskId, filename: path.basename(savePath), path: savePath });
-      }
-      log.info(`下载完成: ${taskId}`);
-    });
-
-    response.on('error', (error) => {
-      fileStream.end();
-      updateTaskStatus(taskId, 'failed');
-      activeDownloads.delete(taskId);
-      log.error(`下载错误: ${taskId}`, error);
-    });
-
-    // 保存活跃下载引用
-    activeDownloads.set(taskId, { request, paused: false });
-  });
-
-  request.on('error', (error) => {
-    updateTaskStatus(taskId, 'failed');
-    activeDownloads.delete(taskId);
-    log.error(`下载请求错误: ${taskId}`, error);
   });
 }
 

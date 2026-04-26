@@ -26,7 +26,8 @@
     "test:coverage": "jest --coverage",
     "test:e2e": "playwright test",
     "start": "electron .",
-    "clean": "rm -rf dist node_modules"
+    "clean": "rm -rf dist node_modules",
+    "postinstall": "node scripts/download-aria2.js"
   },
   "dependencies": {
     "electron-store": "^8.0.0",

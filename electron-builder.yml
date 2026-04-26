@@ -65,6 +65,10 @@ extraResources:
     to: assets/
     filter:
       - "**/*"
+  - from: resources/aria2/
+    to: aria2/
+    filter:
+      - "aria2c*"
 
 # 自动更新
 publish:
