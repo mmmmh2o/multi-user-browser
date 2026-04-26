@@ -6,8 +6,14 @@ const log = require('electron-log');
 let _store = null;
 function getStore() {
   if (!_store) {
-    const Store = require('electron-store');
-    _store = new Store({ name: 'users' });
+    try {
+      const Store = require('electron-store');
+      _store = new Store({ name: 'users' });
+      log.info('[UserHandlers] electron-store 初始化成功，路径:', _store.path);
+    } catch (error) {
+      log.error('[UserHandlers] electron-store 初始化失败:', error);
+      throw error;
+    }
   }
   return _store;
 }
@@ -39,9 +45,9 @@ function registerUserHandlers() {
         const index = users.findIndex((u) => u.id === user.id);
         if (index !== -1) {
           users[index] = { ...users[index], ...user, updatedAt: now };
-          log.info(`更新用户: ${user.id}`);
+          log.info(`[UserHandlers] 更新用户: ${user.id}`);
         } else {
-          log.warn(`用户不存在: ${user.id}`);
+          log.warn(`[UserHandlers] 用户不存在: ${user.id}`);
           return null;
         }
       } else {
@@ -56,13 +62,15 @@ function registerUserHandlers() {
           isActive: false,
         };
         users.push(newUser);
-        log.info(`新建用户: ${newUser.id} (${newUser.name})`);
+        log.info(`[UserHandlers] 新建用户: ${newUser.id} (${newUser.name})`);
       }
 
       getStore().set('users', users);
-      return user.id ? users.find((u) => u.id === user.id) : users[users.length - 1];
+      const result = user.id ? users.find((u) => u.id === user.id) : users[users.length - 1];
+      log.info(`[UserHandlers] 保存成功，返回:`, result?.id);
+      return result;
     } catch (error) {
-      log.error('保存用户失败:', error);
+      log.error('[UserHandlers] 保存用户失败:', error.message, error.stack);
       return null;
     }
   });

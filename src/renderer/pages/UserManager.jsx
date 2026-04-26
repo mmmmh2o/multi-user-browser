@@ -58,8 +58,15 @@ export default function UserManager() {
     try {
       values = await form.validateFields();
     } catch (validationError) {
-      // form.validateFields() 拒绝 = 表单校验不通过，Ant Design 会自动显示红色提示
       console.warn('[UserManager] 表单校验失败:', validationError);
+      return;
+    }
+
+    // 诊断：检查 electronAPI 是否可用
+    if (!window.electronAPI) {
+      console.error('[UserManager] window.electronAPI 未定义 — preload 脚本可能未加载');
+      console.error('[UserManager] __MUB_PRELOAD_READY__:', window.__MUB_PRELOAD_READY__);
+      message.error('保存失败：主进程未就绪，请重启应用');
       return;
     }
 
@@ -69,10 +76,8 @@ export default function UserManager() {
       const result = await safeCall(() => window.electronAPI.saveUser(user));
 
       if (result === null || result === undefined) {
-        // safeCall 返回 fallback → IPC 调用失败
-        console.error('[UserManager] saveUser 返回 null，IPC 调用可能失败');
-        console.error('[UserManager] window.electronAPI:', window.electronAPI);
-        message.error('保存失败：无法连接到主进程，请检查控制台日志');
+        console.error('[UserManager] saveUser 返回 null — IPC 调用失败或主进程 handler 异常');
+        message.error('保存失败：主进程响应异常，请查看控制台日志');
         return;
       }
 
