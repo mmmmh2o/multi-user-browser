@@ -36,12 +36,12 @@ export default function UserManager() {
     setLoading(true);
     try {
       const data = await safeCall(
-        window.electronAPI?.getUsers,
+        () => window.electronAPI.getUsers(),
         []
       );
       setUsers(data || []);
     } catch (error) {
-      console.error('加载用户失败:', error);
+      console.error('[UserManager] 加载用户失败:', error);
       message.error('加载用户失败');
       setUsers([]);
     } finally {
@@ -54,17 +54,36 @@ export default function UserManager() {
   }, []);
 
   const handleSave = async () => {
+    let values;
     try {
-      const values = await form.validateFields();
-      const user = editingUser ? { ...editingUser, ...values } : values;
-      await safeCall(() => window.electronAPI.saveUser(user));
+      values = await form.validateFields();
+    } catch (validationError) {
+      // form.validateFields() 拒绝 = 表单校验不通过，Ant Design 会自动显示红色提示
+      console.warn('[UserManager] 表单校验失败:', validationError);
+      return;
+    }
+
+    const user = editingUser ? { ...editingUser, ...values } : values;
+
+    try {
+      const result = await safeCall(() => window.electronAPI.saveUser(user));
+
+      if (result === null || result === undefined) {
+        // safeCall 返回 fallback → IPC 调用失败
+        console.error('[UserManager] saveUser 返回 null，IPC 调用可能失败');
+        console.error('[UserManager] window.electronAPI:', window.electronAPI);
+        message.error('保存失败：无法连接到主进程，请检查控制台日志');
+        return;
+      }
+
       message.success(editingUser ? '用户已更新' : '用户已创建');
       setModalOpen(false);
       form.resetFields();
       setEditingUser(null);
       loadUsers();
     } catch (error) {
-      message.error('保存失败');
+      console.error('[UserManager] 保存用户异常:', error);
+      message.error(`保存失败：${error?.message || '未知错误'}`);
     }
   };
 
