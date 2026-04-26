@@ -67,7 +67,7 @@ function registerUserHandlers() {
 
       getStore().set('users', users);
       const result = user.id ? users.find((u) => u.id === user.id) : users[users.length - 1];
-      log.info(`[UserHandlers] 保存成功，返回:`, result?.id);
+      log.info('[UserHandlers] 保存成功，返回:', result?.id);
       return result;
     } catch (error) {
       log.error('[UserHandlers] 保存用户失败:', error.message, error.stack);
