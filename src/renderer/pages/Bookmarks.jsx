@@ -1,24 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card, Table, Button, Input, Space, Tooltip, Empty, message,
-} from 'antd';
-import {
-  DeleteOutlined, StarFilled, SearchOutlined, GlobalOutlined,
-} from '@ant-design/icons';
+import { Button, Tooltip, message } from 'antd';
+import { StarFilled, GlobalOutlined, DeleteOutlined } from '@ant-design/icons';
 import { safeCall } from '../utils/ipcHelper';
-import CardIcon from '../components/CardIcon';
+import CrudTablePage from '../components/CrudTablePage';
 
 export default function Bookmarks() {
   const [bookmarks, setBookmarks] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState('');
 
   const loadBookmarks = async () => {
     setLoading(true);
     try {
       const data = await safeCall(() => window.electronAPI?.getBookmarks(), []);
       setBookmarks(data || []);
-    } catch (error) {
+    } catch {
       message.error('加载书签失败');
       setBookmarks([]);
     } finally {
@@ -37,12 +32,6 @@ export default function Bookmarks() {
       message.error('删除失败');
     }
   };
-
-  const filtered = bookmarks.filter(
-    (b) =>
-      (b.title || '').toLowerCase().includes(search.toLowerCase()) ||
-      (b.url || '').toLowerCase().includes(search.toLowerCase())
-  );
 
   const columns = [
     {
@@ -81,7 +70,7 @@ export default function Bookmarks() {
       ellipsis: true,
       render: (url) => (
         <Tooltip title={url}>
-          <span style={{ color: 'var(--mub-text-muted)', fontSize: 12 }}>{url}</span>
+          <span style={{ color: 'var(--mub-text-muted)', fontSize: 'var(--mub-font-size-sm)' }}>{url}</span>
         </Tooltip>
       ),
     },
@@ -90,7 +79,7 @@ export default function Bookmarks() {
       dataIndex: 'createdAt',
       width: 150,
       render: (ts) => (
-        <span style={{ color: 'var(--mub-text-secondary)', fontSize: 12.5 }}>
+        <span style={{ color: 'var(--mub-text-secondary)', fontSize: 'var(--mub-font-size-sm)' }}>
           {ts ? new Date(ts).toLocaleString('zh-CN') : '-'}
         </span>
       ),
@@ -114,41 +103,17 @@ export default function Bookmarks() {
   ];
 
   return (
-    <Card
-      title={
-        <span className="mub-card-title">
-          <CardIcon icon={<StarFilled />} color="#faad14" />
-          <span>书签</span>
-        </span>
-      }
-      extra={
-        <Input
-          placeholder="搜索书签..."
-          prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          allowClear
-          style={{ width: 260 }}
-        />
-      }
-    >
-      <Table
-        columns={columns}
-        dataSource={filtered}
-        rowKey="id"
-        loading={loading}
-        pagination={{ pageSize: 10, showTotal: (t) => `共 ${t} 条`, showSizeChanger: true, pageSizeOptions: ['10', '20', '50'] }}
-        locale={{
-          emptyText: (
-            <Empty
-              description={<span>
-                暂无书签<br />
-                <span className="mub-empty-hint">在浏览器中点击 ⭐ 收藏网页</span>
-              </span>}
-            />
-          ),
-        }}
-      />
-    </Card>
+    <CrudTablePage
+      title="书签"
+      icon={<StarFilled />}
+      iconColor="#faad14"
+      columns={columns}
+      dataSource={bookmarks}
+      loading={loading}
+      searchFields={['title', 'url']}
+      searchPlaceholder="搜索书签..."
+      emptyText="暂无书签"
+      emptyHint="在浏览器中点击 ⭐ 收藏网页"
+    />
   );
 }

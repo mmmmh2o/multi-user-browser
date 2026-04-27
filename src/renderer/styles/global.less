@@ -34,8 +34,24 @@
   --mub-shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
   --mub-radius: 10px;
   --mub-radius-sm: 6px;
+  --mub-radius-xs: 4px;
   --mub-radius-lg: 14px;
+  --mub-radius-xl: 20px;
   --mub-transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  --mub-space-xs: 4px;
+  --mub-space-sm: 8px;
+  --mub-space-md: 16px;
+  --mub-space-lg: 24px;
+  --mub-space-xl: 32px;
+
+  --mub-font-mono: 'JetBrains Mono', Menlo, monospace;
+  --mub-font-size-xs: 11px;
+  --mub-font-size-sm: 12px;
+  --mub-font-size-base: 13.5px;
+  --mub-font-size-md: 15px;
+  --mub-font-size-lg: 16px;
+  --mub-font-size-xl: 22px;
 }
 
 /* ---------- Reset ---------- */
@@ -270,6 +286,54 @@ body {
 .mub-empty-hint {
   color: var(--mub-text-muted);
   font-size: 12px;
+}
+
+/* ---------- Sidebar Dark Menu ---------- */
+.mub-sidebar .ant-menu-dark {
+  background: transparent !important;
+}
+.mub-sidebar .ant-menu-dark .ant-menu-item {
+  color: rgba(255,255,255,0.65) !important;
+  margin: 2px 0 !important;
+  border-radius: var(--mub-radius-sm) !important;
+  height: 38px !important;
+  line-height: 38px !important;
+  padding-left: 12px !important;
+  transition: all var(--mub-transition) !important;
+}
+.mub-sidebar .ant-menu-dark .ant-menu-item:hover {
+  color: #fff !important;
+  background: rgba(255,255,255,0.08) !important;
+}
+.mub-sidebar .ant-menu-dark .ant-menu-item-selected {
+  color: #fff !important;
+  background: linear-gradient(90deg, rgba(79,110,247,0.35) 0%, rgba(79,110,247,0.15) 100%) !important;
+  box-shadow: inset 3px 0 0 0 var(--mub-primary) !important;
+}
+.mub-sidebar .ant-menu-dark .ant-menu-item-selected .ant-menu-item-icon {
+  color: var(--mub-primary) !important;
+}
+.mub-sidebar .ant-menu-dark .ant-menu-item-icon {
+  font-size: 15px !important;
+  margin-right: 10px !important;
+}
+.mub-sidebar .ant-menu-dark .ant-menu-item .ant-menu-item-icon + span {
+  font-size: var(--mub-font-size-base) !important;
+  font-weight: 500 !important;
+}
+.mub-sidebar .ant-divider {
+  border-color: rgba(255,255,255,0.06) !important;
+  margin: 6px 12px !important;
+}
+.mub-sidebar .ant-menu-item-group-title {
+  padding: 8px 12px 4px !important;
+}
+
+/* ---------- Container Card ---------- */
+.mub-container-card .ant-card-head-title > span {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
 }
 
 /* ---------- Transitions ---------- */

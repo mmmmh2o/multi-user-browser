@@ -8,6 +8,7 @@ import {
   CloseCircleOutlined, CopyOutlined,
 } from '@ant-design/icons';
 import { safeCall } from '../utils/ipcHelper';
+import ContainerDot from '../components/ContainerDot';
 
 const HOME_URL = 'about:blank';
 const NEW_TAB_URL = 'about:blank';
@@ -206,7 +207,7 @@ export default function Browser() {
     const tab = tabs.find((t) => t.key === key);
     const containerItems = containers.map((c) => ({
       key: `container-${c.id}`,
-      label: (<span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: c.color, marginRight: 8 }} />{c.name}</span>),
+      label: (<span><ContainerDot color={c.color} size={8} style={{ marginRight: 8 }} />{c.name}</span>),
       onClick: () => setTabContainer(key, c.id),
     }));
     return [
@@ -250,11 +251,7 @@ export default function Browser() {
                   maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                   fontSize: 12.5,
                 }}>
-                  <span style={{
-                    width: 10, height: 10, borderRadius: '50%',
-                    background: tab.containerColor || '#8c8c8c', flexShrink: 0,
-                    boxShadow: `0 0 0 1.5px ${tab.containerColor || '#8c8c8c'}30`,
-                  }} title={tab.containerName || '默认'} />
+                  <ContainerDot color={tab.containerColor} size={10} title={tab.containerName || '默认'} />
                   {tab.isLoading
                     ? <Spin size="small" style={{ marginRight: 2 }} />
                     : tab.favicon
@@ -311,7 +308,7 @@ export default function Browser() {
           menu={{
             items: containers.map((c) => ({
               key: c.id,
-              label: (<span><span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: c.color, marginRight: 8 }} />{c.name}</span>),
+              label: (<span><ContainerDot color={c.color} size={10} style={{ marginRight: 8 }} />{c.name}</span>),
             })),
             onClick: ({ key }) => { if (activeTabKey) setTabContainer(activeTabKey, key); },
           }}
@@ -321,14 +318,10 @@ export default function Browser() {
             <Tag style={{
               cursor: 'pointer', margin: 0, borderRadius: 16,
               lineHeight: '22px', padding: '1px 10px',
-              fontSize: 12, fontWeight: 500,
+              fontSize: 'var(--mub-font-size-sm)', fontWeight: 500,
               display: 'flex', alignItems: 'center', gap: 5,
             }} color={activeTab?.containerColor || '#8c8c8c'}>
-              <span style={{
-                width: 8, height: 8, borderRadius: '50%',
-                background: activeTab?.containerColor || '#8c8c8c',
-                display: 'inline-block', boxShadow: '0 0 0 2px rgba(255,255,255,0.8)',
-              }} />
+              <ContainerDot color={activeTab?.containerColor} size={8} />
               {activeTab?.containerName || '默认'}
             </Tag>
           </Tooltip>

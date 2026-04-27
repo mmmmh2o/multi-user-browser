@@ -1,24 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import { Button, Tooltip, Popconfirm, message } from 'antd';
 import {
-  Card, Table, Button, Input, Space, Tooltip, Empty, message, Popconfirm,
-} from 'antd';
-import {
-  DeleteOutlined, HistoryOutlined, SearchOutlined, ClearOutlined, GlobalOutlined,
+  HistoryOutlined, DeleteOutlined, ClearOutlined, GlobalOutlined,
 } from '@ant-design/icons';
 import { safeCall } from '../utils/ipcHelper';
-import CardIcon from '../components/CardIcon';
+import CrudTablePage from '../components/CrudTablePage';
 
 export default function History() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState('');
 
   const loadHistory = async () => {
     setLoading(true);
     try {
       const data = await safeCall(() => window.electronAPI?.getHistory(), []);
       setHistory(data || []);
-    } catch (error) {
+    } catch {
       message.error('加载历史记录失败');
       setHistory([]);
     } finally {
@@ -47,12 +44,6 @@ export default function History() {
       message.error('清空失败');
     }
   };
-
-  const filtered = history.filter(
-    (h) =>
-      (h.title || '').toLowerCase().includes(search.toLowerCase()) ||
-      (h.url || '').toLowerCase().includes(search.toLowerCase())
-  );
 
   const columns = [
     {
@@ -88,7 +79,7 @@ export default function History() {
       ellipsis: true,
       render: (url) => (
         <Tooltip title={url}>
-          <span style={{ color: 'var(--mub-text-muted)', fontSize: 12 }}>{url}</span>
+          <span style={{ color: 'var(--mub-text-muted)', fontSize: 'var(--mub-font-size-sm)' }}>{url}</span>
         </Tooltip>
       ),
     },
@@ -97,7 +88,7 @@ export default function History() {
       dataIndex: 'visitedAt',
       width: 150,
       render: (ts) => (
-        <span style={{ color: 'var(--mub-text-secondary)', fontSize: 12.5 }}>
+        <span style={{ color: 'var(--mub-text-secondary)', fontSize: 'var(--mub-font-size-sm)' }}>
           {ts ? new Date(ts).toLocaleString('zh-CN') : '-'}
         </span>
       ),
@@ -120,53 +111,31 @@ export default function History() {
     },
   ];
 
-  return (
-    <Card
-      title={
-        <span className="mub-card-title">
-          <CardIcon icon={<HistoryOutlined />} color="#8b5cf6" />
-          <span>历史记录</span>
-        </span>
-      }
-      extra={
-        <Space>
-          <Input
-            placeholder="搜索历史..."
-            prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            allowClear
-            style={{ width: 260 }}
-          />
-          <Popconfirm
-            title="确定清空所有历史记录？"
-            onConfirm={handleClear}
-            okText="清空"
-            cancelText="取消"
-            okButtonProps={{ danger: true }}
-          >
-            <Button icon={<ClearOutlined />} danger>清空</Button>
-          </Popconfirm>
-        </Space>
-      }
+  const clearButton = (
+    <Popconfirm
+      title="确定清空所有历史记录？"
+      onConfirm={handleClear}
+      okText="清空"
+      cancelText="取消"
+      okButtonProps={{ danger: true }}
     >
-      <Table
-        columns={columns}
-        dataSource={filtered}
-        rowKey="id"
-        loading={loading}
-        pagination={{ pageSize: 10, showTotal: (t) => `共 ${t} 条`, showSizeChanger: true, pageSizeOptions: ['10', '20', '50'] }}
-        locale={{
-          emptyText: (
-            <Empty
-              description={<span>
-                暂无历史记录<br />
-                <span className="mub-empty-hint">浏览网页后会自动记录</span>
-              </span>}
-            />
-          ),
-        }}
-      />
-    </Card>
+      <Button icon={<ClearOutlined />} danger>清空</Button>
+    </Popconfirm>
+  );
+
+  return (
+    <CrudTablePage
+      title="历史记录"
+      icon={<HistoryOutlined />}
+      iconColor="#8b5cf6"
+      columns={columns}
+      dataSource={history}
+      loading={loading}
+      searchFields={['title', 'url']}
+      searchPlaceholder="搜索历史..."
+      headerExtra={clearButton}
+      emptyText="暂无历史记录"
+      emptyHint="浏览网页后会自动记录"
+    />
   );
 }

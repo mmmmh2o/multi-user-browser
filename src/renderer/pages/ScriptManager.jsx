@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Card, Table, Button, Modal, Form, Input, Space, Switch,
-  Popconfirm, Empty, message, Tooltip,
+  Button, Modal, Form, Input, Switch, Popconfirm, message, Tooltip,
 } from 'antd';
 import {
   PlusOutlined, EditOutlined, DeleteOutlined, CodeOutlined,
 } from '@ant-design/icons';
 import { safeCall } from '../utils/ipcHelper';
-import CardIcon from '../components/CardIcon';
+import CrudTablePage from '../components/CrudTablePage';
 
 export default function ScriptManager() {
   const [scripts, setScripts] = useState([]);
@@ -57,6 +56,14 @@ export default function ScriptManager() {
     } catch { message.error('切换失败'); }
   };
 
+  const handleAdd = () => {
+    setEditingScript(null); form.resetFields(); setModalOpen(true);
+  };
+
+  const handleEdit = (record) => {
+    setEditingScript(record); form.setFieldsValue(record); setModalOpen(true);
+  };
+
   const columns = [
     {
       title: '名称',
@@ -68,7 +75,12 @@ export default function ScriptManager() {
       dataIndex: 'match',
       ellipsis: true,
       render: (match) => match
-        ? <code style={{ fontSize: 12, background: 'var(--mub-bg-table-hover)', padding: '2px 6px', borderRadius: 4 }}>{match}</code>
+        ? <code style={{
+            fontSize: 'var(--mub-font-size-sm)',
+            background: 'var(--mub-bg-table-hover)',
+            padding: '2px 6px',
+            borderRadius: 'var(--mub-radius-xs)',
+          }}>{match}</code>
         : <span style={{ color: 'var(--mub-text-muted)' }}>全部页面</span>,
     },
     {
@@ -76,11 +88,7 @@ export default function ScriptManager() {
       dataIndex: 'enabled',
       width: 90,
       render: (enabled, record) => (
-        <Switch
-          checked={enabled}
-          size="small"
-          onChange={() => handleToggle(record)}
-        />
+        <Switch checked={enabled} size="small" onChange={() => handleToggle(record)} />
       ),
     },
     {
@@ -88,7 +96,7 @@ export default function ScriptManager() {
       dataIndex: 'updatedAt',
       width: 150,
       render: (ts) => (
-        <span style={{ color: 'var(--mub-text-secondary)', fontSize: 12.5 }}>
+        <span style={{ color: 'var(--mub-text-secondary)', fontSize: 'var(--mub-font-size-sm)' }}>
           {ts ? new Date(ts).toLocaleString('zh-CN') : '-'}
         </span>
       ),
@@ -98,53 +106,38 @@ export default function ScriptManager() {
       width: 120,
       align: 'right',
       render: (_, record) => (
-        <Space size={4}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--mub-space-xs)' }}>
           <Tooltip title="编辑">
-            <Button type="text" size="small" icon={<EditOutlined />}
-              onClick={() => { setEditingScript(record); form.setFieldsValue(record); setModalOpen(true); }} />
+            <Button type="text" size="small" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
           </Tooltip>
           <Popconfirm title="确定删除此脚本？" onConfirm={() => handleDelete(record.id)}>
             <Tooltip title="删除">
               <Button type="text" size="small" danger icon={<DeleteOutlined />} />
             </Tooltip>
           </Popconfirm>
-        </Space>
+        </div>
       ),
     },
   ];
 
+  const addButton = (
+    <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+      添加脚本
+    </Button>
+  );
+
   return (
-    <Card
-      title={
-        <span className="mub-card-title">
-          <CardIcon icon={<CodeOutlined />} color="#2f54eb" />
-          <span>脚本管理</span>
-        </span>
-      }
-      extra={
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => {
-          setEditingScript(null); form.resetFields(); setModalOpen(true);
-        }}>
-          添加脚本
-        </Button>
-      }
-    >
-      <Table
+    <>
+      <CrudTablePage
+        title="脚本管理"
+        icon={<CodeOutlined />}
+        iconColor="#2f54eb"
         columns={columns}
         dataSource={scripts}
-        rowKey="id"
         loading={loading}
-        pagination={{ pageSize: 10, showTotal: (t) => `共 ${t} 条`, showSizeChanger: true, pageSizeOptions: ['10', '20', '50'] }}
-        locale={{
-          emptyText: (
-            <Empty
-              description={<span>
-                暂无脚本<br />
-                <span className="mub-empty-hint">添加 UserScript 增强浏览器功能</span>
-              </span>}
-            />
-          ),
-        }}
+        headerExtra={addButton}
+        emptyText="暂无脚本"
+        emptyHint="添加 UserScript 增强浏览器功能"
       />
 
       <Modal
@@ -170,11 +163,11 @@ export default function ScriptManager() {
             <Input.TextArea
               placeholder={`// ==UserScript==\n// @name     My Script\n// @match    https://example.com/*\n// ==/UserScript==\n\nconsole.log('Hello!');`}
               rows={12}
-              style={{ fontFamily: 'monospace', fontSize: 13 }}
+              style={{ fontFamily: 'var(--mub-font-mono)', fontSize: 'var(--mub-font-size-base)' }}
             />
           </Form.Item>
         </Form>
       </Modal>
-    </Card>
+    </>
   );
 }

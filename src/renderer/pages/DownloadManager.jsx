@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Card, Table, Button, Input, Space, Tag, Progress, Empty, message,
-  Tooltip, Popconfirm, Modal, Form, Tabs, Badge, InputNumber,
+  Card, Table, Button, Input, Tag, Progress, Empty, message,
+  Tooltip, Popconfirm, Modal, Form, Tabs, InputNumber,
 } from 'antd';
 import {
   PlusOutlined, PauseCircleOutlined, PlayCircleOutlined,
@@ -12,23 +12,10 @@ import {
   StopOutlined, ThunderboltOutlined, ClearOutlined,
 } from '@ant-design/icons';
 import { safeCall } from '../utils/ipcHelper';
+import { formatBytes, formatSpeed } from '../utils/format';
+import { DEFAULT_PAGINATION } from '../constants';
 
 /* ─── 工具函数 ─── */
-function formatBytes(bytes) {
-  if (!bytes || bytes <= 0) return '-';
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
-}
-
-function formatSpeed(bytesPerSec) {
-  if (!bytesPerSec || bytesPerSec <= 0) return '0 B/s';
-  if (bytesPerSec < 1024) return `${bytesPerSec} B/s`;
-  if (bytesPerSec < 1024 * 1024) return `${(bytesPerSec / 1024).toFixed(1)} KB/s`;
-  return `${(bytesPerSec / (1024 * 1024)).toFixed(1)} MB/s`;
-}
-
 function formatETA(remaining, speed) {
   if (!remaining || !speed || speed <= 0) return '';
   const seconds = Math.ceil(remaining / speed);
@@ -45,12 +32,12 @@ function getFileInfo(url, filename) {
 
 /* ─── 状态配置 ─── */
 const STATUS = {
-  downloading: { color: '#1677ff', bg: '#e6f4ff', text: '下载中', icon: <ThunderboltOutlined /> },
-  paused:      { color: '#faad14', bg: '#fffbe6', text: '已暂停', icon: <PauseOutlined /> },
-  completed:   { color: '#52c41a', bg: '#f6ffed', text: '已完成', icon: <CheckCircleOutlined /> },
-  failed:      { color: '#ff4d4f', bg: '#fff2f0', text: '失败', icon: <ExclamationCircleOutlined /> },
-  cancelled:   { color: '#8c8c8c', bg: '#fafafa', text: '已取消', icon: <StopOutlined /> },
-  pending:     { color: '#8c8c8c', bg: '#fafafa', text: '等待中', icon: <DownloadOutlined /> },
+  downloading: { color: 'var(--mub-primary)', bg: '#e6f4ff', text: '下载中', icon: <ThunderboltOutlined /> },
+  paused:      { color: 'var(--mub-warning)', bg: '#fffbe6', text: '已暂停', icon: <PauseOutlined /> },
+  completed:   { color: 'var(--mub-success)', bg: '#f6ffed', text: '已完成', icon: <CheckCircleOutlined /> },
+  failed:      { color: 'var(--mub-danger)', bg: '#fff2f0', text: '失败', icon: <ExclamationCircleOutlined /> },
+  cancelled:   { color: 'var(--mub-text-muted)', bg: 'var(--mub-bg)', text: '已取消', icon: <StopOutlined /> },
+  pending:     { color: 'var(--mub-text-muted)', bg: 'var(--mub-bg)', text: '等待中', icon: <DownloadOutlined /> },
 };
 
 const FILTER_TABS = [
@@ -67,50 +54,52 @@ function SpeedBar({ download, upload }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 20,
-      padding: '10px 16px',
-      background: hasSpeed ? 'linear-gradient(135deg, #f0f9ff 0%, #f0fff4 100%)' : '#fafafa',
-      borderRadius: 10,
-      border: `1px solid ${hasSpeed ? '#b7eb8f10' : '#f0f0f0'}`,
-      transition: 'all 0.3s ease',
+      padding: 'var(--mub-space-sm) var(--mub-space-md)',
+      background: hasSpeed
+        ? 'linear-gradient(135deg, var(--mub-primary-bg) 0%, #f6ffed 100%)'
+        : 'var(--mub-bg)',
+      borderRadius: 'var(--mub-radius)',
+      border: `1px solid ${hasSpeed ? 'var(--mub-border)' : 'var(--mub-border-light)'}`,
+      transition: 'all var(--mub-transition)',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--mub-space-sm)' }}>
         <div style={{
-          width: 28, height: 28, borderRadius: 8,
-          background: download > 0 ? '#1677ff10' : '#f0f0f0',
+          width: 28, height: 28, borderRadius: 'var(--mub-radius-sm)',
+          background: download > 0 ? 'var(--mub-primary-bg)' : 'var(--mub-bg-table-hover)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          transition: 'all 0.3s ease',
+          transition: 'all var(--mub-transition)',
         }}>
-          <ArrowDownOutlined style={{ color: download > 0 ? '#1677ff' : '#bbb', fontSize: 13 }} />
+          <ArrowDownOutlined style={{ color: download > 0 ? 'var(--mub-primary)' : 'var(--mub-text-muted)', fontSize: 13 }} />
         </div>
         <div>
-          <div style={{ fontSize: 10, color: '#8c8c8c', lineHeight: 1, marginBottom: 2 }}>下载</div>
+          <div style={{ fontSize: 'var(--mub-font-size-xs)', color: 'var(--mub-text-muted)', lineHeight: 1, marginBottom: 2 }}>下载</div>
           <div style={{
-            fontSize: 14, fontWeight: 600, fontFamily: 'JetBrains Mono, Menlo, monospace',
-            color: download > 0 ? '#1677ff' : '#bfbfbf',
-            transition: 'color 0.3s ease',
+            fontSize: 14, fontWeight: 600, fontFamily: 'var(--mub-font-mono)',
+            color: download > 0 ? 'var(--mub-primary)' : 'var(--mub-text-muted)',
+            transition: 'color var(--mub-transition)',
           }}>
             {formatSpeed(download)}
           </div>
         </div>
       </div>
 
-      <div style={{ width: 1, height: 24, background: '#f0f0f0' }} />
+      <div style={{ width: 1, height: 24, background: 'var(--mub-border-light)' }} />
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--mub-space-sm)' }}>
         <div style={{
-          width: 28, height: 28, borderRadius: 8,
-          background: upload > 0 ? '#52c41a10' : '#f0f0f0',
+          width: 28, height: 28, borderRadius: 'var(--mub-radius-sm)',
+          background: upload > 0 ? '#f6ffed' : 'var(--mub-bg-table-hover)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          transition: 'all 0.3s ease',
+          transition: 'all var(--mub-transition)',
         }}>
-          <ArrowUpOutlined style={{ color: upload > 0 ? '#52c41a' : '#bbb', fontSize: 13 }} />
+          <ArrowUpOutlined style={{ color: upload > 0 ? 'var(--mub-success)' : 'var(--mub-text-muted)', fontSize: 13 }} />
         </div>
         <div>
-          <div style={{ fontSize: 10, color: '#8c8c8c', lineHeight: 1, marginBottom: 2 }}>上传</div>
+          <div style={{ fontSize: 'var(--mub-font-size-xs)', color: 'var(--mub-text-muted)', lineHeight: 1, marginBottom: 2 }}>上传</div>
           <div style={{
-            fontSize: 14, fontWeight: 600, fontFamily: 'JetBrains Mono, Menlo, monospace',
-            color: upload > 0 ? '#52c41a' : '#bfbfbf',
-            transition: 'color 0.3s ease',
+            fontSize: 14, fontWeight: 600, fontFamily: 'var(--mub-font-mono)',
+            color: upload > 0 ? 'var(--mub-success)' : 'var(--mub-text-muted)',
+            transition: 'color var(--mub-transition)',
           }}>
             {formatSpeed(upload)}
           </div>
@@ -125,17 +114,17 @@ function EmptyState({ hasSearch, onAdd }) {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
-      justifyContent: 'center', padding: '48px 24px', gap: 16,
+      justifyContent: 'center', padding: '48px 24px', gap: 'var(--mub-space-md)',
     }}>
       <div style={{
         width: 80, height: 80, borderRadius: 20,
-        background: 'linear-gradient(135deg, #e6f4ff 0%, #f0f5ff 100%)',
+        background: 'var(--mub-primary-bg)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        marginBottom: 8,
+        marginBottom: 'var(--mub-space-sm)',
       }}>
-        <DownloadOutlined style={{ fontSize: 32, color: '#1677ff' }} />
+        <DownloadOutlined style={{ fontSize: 32, color: 'var(--mub-primary)' }} />
       </div>
-      <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--mub-text)' }}>
+      <div style={{ fontSize: 'var(--mub-font-size-md)', fontWeight: 500, color: 'var(--mub-text)' }}>
         {hasSearch ? '没有找到匹配的下载' : '还没有下载任务'}
       </div>
       <div className="mub-empty-hint" style={{ textAlign: 'center', maxWidth: 280, lineHeight: 1.6 }}>
@@ -144,7 +133,7 @@ function EmptyState({ hasSearch, onAdd }) {
           : '在浏览器中点击下载链接会自动接管，或者手动添加一个下载任务'}
       </div>
       {!hasSearch && (
-        <Button type="primary" icon={<PlusOutlined />} onClick={onAdd} style={{ marginTop: 8 }}>
+        <Button type="primary" icon={<PlusOutlined />} onClick={onAdd} style={{ marginTop: 'var(--mub-space-sm)' }}>
           新建下载
         </Button>
       )}
@@ -272,25 +261,26 @@ export default function DownloadManager() {
       render: (name, record) => {
         const info = getFileInfo(record.url, name);
         return (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--mub-space-sm)' }}>
             <div style={{
-              width: 36, height: 36, borderRadius: 8, flexShrink: 0,
-              background: STATUS[record.status]?.bg || '#fafafa',
+              width: 36, height: 36, borderRadius: 'var(--mub-radius-sm)', flexShrink: 0,
+              background: STATUS[record.status]?.bg || 'var(--mub-bg)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 12, fontWeight: 700, color: STATUS[record.status]?.color || '#8c8c8c',
-              fontFamily: 'JetBrains Mono, Menlo, monospace',
+              fontSize: 'var(--mub-font-size-sm)', fontWeight: 700,
+              color: STATUS[record.status]?.color || 'var(--mub-text-muted)',
+              fontFamily: 'var(--mub-font-mono)',
             }}>
               {info.ext ? `.${info.ext.slice(0, 3)}` : '📄'}
             </div>
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{
-                fontWeight: 500, fontSize: 13, color: '#262626',
+                fontWeight: 500, fontSize: 'var(--mub-font-size-base)', color: 'var(--mub-text)',
                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               }}>
                 {info.name}
               </div>
               <div style={{
-                fontSize: 11, color: '#8c8c8c', marginTop: 1,
+                fontSize: 'var(--mub-font-size-xs)', color: 'var(--mub-text-muted)', marginTop: 1,
                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               }}>
                 {record.url?.length > 50 ? record.url.slice(0, 50) + '...' : record.url}
@@ -316,16 +306,16 @@ export default function DownloadManager() {
               size="small"
               status={s === 'failed' ? 'exception' : s === 'completed' ? 'success' : 'active'}
               strokeColor={s === 'downloading'
-                ? { '0%': '#1677ff', '100%': '#52c41a' }
-                : s === 'completed' ? '#52c41a' : undefined}
-              trailColor="#f5f5f5"
+                ? { '0%': 'var(--mub-primary)', '100%': 'var(--mub-success)' }
+                : s === 'completed' ? 'var(--mub-success)' : undefined}
+              trailColor="var(--mub-border-light)"
             />
             <div style={{
               display: 'flex', justifyContent: 'space-between',
-              fontSize: 11, color: '#8c8c8c', marginTop: 3, lineHeight: 1,
+              fontSize: 'var(--mub-font-size-xs)', color: 'var(--mub-text-muted)', marginTop: 3, lineHeight: 1,
             }}>
               <span>{formatBytes(record.downloadedSize)} / {formatBytes(record.totalSize)}</span>
-              {eta && <span style={{ color: '#1677ff' }}>⏱ {eta}</span>}
+              {eta && <span style={{ color: 'var(--mub-primary)' }}>⏱ {eta}</span>}
             </div>
           </div>
         );
@@ -337,11 +327,11 @@ export default function DownloadManager() {
       width: 90,
       sorter: (a, b) => (a.speed || 0) - (b.speed || 0),
       render: (speed, record) => {
-        if (record.status !== 'downloading') return <span style={{ color: '#bfbfbf' }}>—</span>;
+        if (record.status !== 'downloading') return <span style={{ color: 'var(--mub-text-muted)' }}>—</span>;
         return (
           <span style={{
-            color: '#1677ff', fontSize: 12, fontWeight: 500,
-            fontFamily: 'JetBrains Mono, Menlo, monospace',
+            color: 'var(--mub-primary)', fontSize: 'var(--mub-font-size-sm)', fontWeight: 500,
+            fontFamily: 'var(--mub-font-mono)',
           }}>
             {formatSpeed(speed)}
           </span>
@@ -362,7 +352,7 @@ export default function DownloadManager() {
             style={{
               color: info.color, background: info.bg,
               border: `1px solid ${info.color}20`,
-              borderRadius: 6, fontSize: 12,
+              borderRadius: 'var(--mub-radius-sm)', fontSize: 'var(--mub-font-size-sm)',
             }}
           >
             {info.text}
@@ -377,26 +367,26 @@ export default function DownloadManager() {
       render: (_, record) => {
         const s = record.status || 'pending';
         return (
-          <Space size={0}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             {s === 'downloading' && (
               <Tooltip title="暂停">
                 <Button type="text" size="small" icon={<PauseCircleOutlined />}
                   onClick={() => handlePause(record.id)}
-                  style={{ color: '#faad14' }} />
+                  style={{ color: 'var(--mub-warning)' }} />
               </Tooltip>
             )}
             {s === 'paused' && (
               <Tooltip title="继续">
                 <Button type="text" size="small" icon={<PlayCircleOutlined />}
                   onClick={() => handleResume(record.id)}
-                  style={{ color: '#1677ff' }} />
+                  style={{ color: 'var(--mub-primary)' }} />
               </Tooltip>
             )}
             {(s === 'failed' || s === 'cancelled') && (
               <Tooltip title="重试">
                 <Button type="text" size="small" icon={<ReloadOutlined />}
                   onClick={() => handleRetry(record.id)}
-                  style={{ color: '#1677ff' }} />
+                  style={{ color: 'var(--mub-primary)' }} />
               </Tooltip>
             )}
             {['downloading', 'paused', 'pending'].includes(s) && (
@@ -410,144 +400,134 @@ export default function DownloadManager() {
               <Popconfirm title="从列表移除？" onConfirm={() => handleDelete(record.id)}>
                 <Tooltip title="删除">
                   <Button type="text" size="small" icon={<DeleteOutlined />}
-                    style={{ color: '#8c8c8c' }} />
+                    style={{ color: 'var(--mub-text-muted)' }} />
                 </Tooltip>
               </Popconfirm>
             )}
-          </Space>
+          </div>
         );
       },
     },
   ];
 
   return (
-    <div style={{ padding: 0 }}>
+    <div>
       {/* ─── 顶部仪表板 ─── */}
-      <div style={{
-        display: 'flex', alignItems: 'stretch', gap: 12, marginBottom: 16,
-      }}>
-        {/* 速度面板 */}
-        <SpeedBar download={stats.downloadSpeed} upload={stats.uploadSpeed} />
+      <Card style={{ marginBottom: 'var(--mub-space-md)' }}>
+        <div style={{ display: 'flex', alignItems: 'stretch', gap: 'var(--mub-space-sm)' }}>
+          <SpeedBar download={stats.downloadSpeed} upload={stats.uploadSpeed} />
 
-        {/* 统计胶囊 */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 12, padding: '0 16px',
-          background: '#fafafa', borderRadius: 10, border: '1px solid #f0f0f0',
-        }}>
-          {[
-            { label: '活跃', value: stats.active, color: '#1677ff' },
-            { label: '等待', value: stats.waiting, color: '#faad14' },
-            { label: '完成', value: stats.completed, color: '#52c41a' },
-          ].map((s) => (
-            <div key={s.label} style={{ textAlign: 'center' }}>
-              <div style={{
-                fontSize: 18, fontWeight: 700, color: s.color,
-                fontFamily: 'JetBrains Mono, Menlo, monospace',
-                lineHeight: 1,
-              }}>
-                {s.value}
-              </div>
-              <div style={{ fontSize: 10, color: '#8c8c8c', marginTop: 2 }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ flex: 1 }} />
-
-        {/* 操作按钮 */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Tooltip title="暂停全部">
-            <Button size="middle" icon={<PauseOutlined />} onClick={handlePauseAll}
-              disabled={stats.active === 0} />
-          </Tooltip>
-          <Tooltip title="恢复全部">
-            <Button size="middle" icon={<PlayCircleOutlined />} onClick={handleResumeAll}
-              disabled={tabCounts.stopped === 0} />
-          </Tooltip>
-          <Popconfirm title="清除所有已完成任务？" onConfirm={handlePurge} disabled={tabCounts.completed === 0}>
-            <Tooltip title="清除已完成">
-              <Button size="middle" icon={<ClearOutlined />} disabled={tabCounts.completed === 0} />
-            </Tooltip>
-          </Popconfirm>
-          <Tooltip title="速度限制">
-            <Button size="middle" icon={<SettingOutlined />} onClick={() => setSettingsOpen(true)} />
-          </Tooltip>
-          <Button type="primary" size="middle" icon={<PlusOutlined />}
-            onClick={() => setAddModalOpen(true)}>
-            新建下载
-          </Button>
-        </div>
-      </div>
-
-      {/* ─── 搜索栏 ─── */}
-      <Input
-        placeholder="搜索文件名或链接..."
-        prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
-        value={searchText}
-        onChange={(e) => setSearchText(e.target.value)}
-        allowClear
-        style={{ marginBottom: 12, borderRadius: 8 }}
-      />
-
-      {/* ─── 过滤标签 ─── */}
-      <Tabs
-        size="small"
-        activeKey={activeTab}
-        onChange={setActiveTab}
-        items={FILTER_TABS.map((tab) => ({
-          key: tab.key,
-          label: (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              {tab.label}
-              {tabCounts[tab.key] > 0 && (
-                <span style={{
-                  fontSize: 11, fontWeight: 600,
-                  color: activeTab === tab.key ? '#1677ff' : '#8c8c8c',
-                  background: activeTab === tab.key ? '#e6f4ff' : '#f5f5f5',
-                  padding: '1px 6px', borderRadius: 10,
-                  fontFamily: 'JetBrains Mono, Menlo, monospace',
+          {/* 统计胶囊 */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 'var(--mub-space-md)', padding: '0 var(--mub-space-md)',
+            background: 'var(--mub-bg)', borderRadius: 'var(--mub-radius)',
+            border: '1px solid var(--mub-border-light)',
+          }}>
+            {[
+              { label: '活跃', value: stats.active, color: 'var(--mub-primary)' },
+              { label: '等待', value: stats.waiting, color: 'var(--mub-warning)' },
+              { label: '完成', value: stats.completed, color: 'var(--mub-success)' },
+            ].map((s) => (
+              <div key={s.label} style={{ textAlign: 'center' }}>
+                <div style={{
+                  fontSize: 18, fontWeight: 700, color: s.color,
+                  fontFamily: 'var(--mub-font-mono)', lineHeight: 1,
                 }}>
-                  {tabCounts[tab.key]}
-                </span>
-              )}
-            </span>
-          ),
-        }))}
-        style={{ marginBottom: 4 }}
-      />
+                  {s.value}
+                </div>
+                <div style={{ fontSize: 'var(--mub-font-size-xs)', color: 'var(--mub-text-muted)', marginTop: 2 }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
 
-      {/* ─── 表格 ─── */}
-      <Table
-        columns={columns}
-        dataSource={filtered}
-        rowKey="id"
-        loading={loading}
-        size="middle"
-        pagination={{
-          pageSize: 10,
-          showTotal: (t) => `共 ${t} 个任务`,
-          showSizeChanger: true,
-          pageSizeOptions: ['10', '20', '50'],
-          size: 'small',
-        }}
-        locale={{
-          emptyText: <EmptyState hasSearch={!!searchText} onAdd={() => setAddModalOpen(true)} />,
-        }}
-        rowClassName={(record) =>
-          record.status === 'downloading' ? 'mub-row-active' : ''
-        }
-        onRow={(record) => ({
-          style: {
-            transition: 'background 0.2s ease',
-            ...(record.status === 'downloading' ? { background: '#f0f9ff' } : {}),
-          },
-        })}
-      />
+          <div style={{ flex: 1 }} />
+
+          {/* 操作按钮 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--mub-space-xs)' }}>
+            <Tooltip title="暂停全部">
+              <Button size="middle" icon={<PauseOutlined />} onClick={handlePauseAll}
+                disabled={stats.active === 0} />
+            </Tooltip>
+            <Tooltip title="恢复全部">
+              <Button size="middle" icon={<PlayCircleOutlined />} onClick={handleResumeAll}
+                disabled={tabCounts.stopped === 0} />
+            </Tooltip>
+            <Popconfirm title="清除所有已完成任务？" onConfirm={handlePurge} disabled={tabCounts.completed === 0}>
+              <Tooltip title="清除已完成">
+                <Button size="middle" icon={<ClearOutlined />} disabled={tabCounts.completed === 0} />
+              </Tooltip>
+            </Popconfirm>
+            <Tooltip title="速度限制">
+              <Button size="middle" icon={<SettingOutlined />} onClick={() => setSettingsOpen(true)} />
+            </Tooltip>
+            <Button type="primary" size="middle" icon={<PlusOutlined />}
+              onClick={() => setAddModalOpen(true)}>
+              新建下载
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      {/* ─── 搜索 + 过滤 ─── */}
+      <Card>
+        <Input
+          placeholder="搜索文件名或链接..."
+          prefix={<SearchOutlined style={{ color: 'var(--mub-text-muted)' }} />}
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          allowClear
+          style={{ marginBottom: 'var(--mub-space-sm)', borderRadius: 'var(--mub-radius-sm)' }}
+        />
+
+        <Tabs
+          size="small"
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          items={FILTER_TABS.map((tab) => ({
+            key: tab.key,
+            label: (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--mub-space-xs)' }}>
+                {tab.label}
+                {tabCounts[tab.key] > 0 && (
+                  <span style={{
+                    fontSize: 'var(--mub-font-size-xs)', fontWeight: 600,
+                    color: activeTab === tab.key ? 'var(--mub-primary)' : 'var(--mub-text-muted)',
+                    background: activeTab === tab.key ? 'var(--mub-primary-bg)' : 'var(--mub-bg)',
+                    padding: '1px 6px', borderRadius: 'var(--mub-radius-xl)',
+                    fontFamily: 'var(--mub-font-mono)',
+                  }}>
+                    {tabCounts[tab.key]}
+                  </span>
+                )}
+              </span>
+            ),
+          }))}
+          style={{ marginBottom: 4 }}
+        />
+
+        <Table
+          columns={columns}
+          dataSource={filtered}
+          rowKey="id"
+          loading={loading}
+          size="middle"
+          pagination={{ ...DEFAULT_PAGINATION, size: 'small' }}
+          locale={{
+            emptyText: <EmptyState hasSearch={!!searchText} onAdd={() => setAddModalOpen(true)} />,
+          }}
+          onRow={(record) => ({
+            style: {
+              transition: 'background var(--mub-transition)',
+              ...(record.status === 'downloading' ? { background: 'var(--mub-primary-bg)' } : {}),
+            },
+          })}
+        />
+      </Card>
 
       {/* ─── CSS 动画注入 ─── */}
       <style>{`
-        .mub-row-active:hover { background: #e6f4ff !important; }
-        .mub-row-active td { border-bottom-color: #bae0ff !important; }
+        .mub-row-active:hover { background: var(--mub-primary-bg) !important; }
+        .mub-row-active td { border-bottom-color: var(--mub-primary) !important; }
       `}</style>
 
       {/* ─── 新建下载 ─── */}
@@ -568,7 +548,7 @@ export default function DownloadManager() {
               placeholder="https://example.com/file.zip&#10;支持多个链接，每行一个"
               rows={3}
               size="large"
-              style={{ borderRadius: 8 }}
+              style={{ borderRadius: 'var(--mub-radius-sm)' }}
             />
           </Form.Item>
         </Form>
@@ -585,8 +565,8 @@ export default function DownloadManager() {
         width={400}
       >
         <div style={{ marginTop: 12 }}>
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ marginBottom: 8, fontWeight: 500 }}>下载速度限制</div>
+          <div style={{ marginBottom: 'var(--mub-space-md)' }}>
+            <div style={{ marginBottom: 'var(--mub-space-sm)', fontWeight: 500 }}>下载速度限制</div>
             <InputNumber
               min={0}
               value={speedLimit.download}
@@ -595,10 +575,10 @@ export default function DownloadManager() {
               style={{ width: '100%' }}
               addonAfter="KB/s"
             />
-            <div style={{ fontSize: 11, color: '#8c8c8c', marginTop: 4 }}>设为 0 表示不限速</div>
+            <div style={{ fontSize: 'var(--mub-font-size-xs)', color: 'var(--mub-text-muted)', marginTop: 4 }}>设为 0 表示不限速</div>
           </div>
           <div>
-            <div style={{ marginBottom: 8, fontWeight: 500 }}>上传速度限制</div>
+            <div style={{ marginBottom: 'var(--mub-space-sm)', fontWeight: 500 }}>上传速度限制</div>
             <InputNumber
               min={0}
               value={speedLimit.upload}
@@ -607,7 +587,7 @@ export default function DownloadManager() {
               style={{ width: '100%' }}
               addonAfter="KB/s"
             />
-            <div style={{ fontSize: 11, color: '#8c8c8c', marginTop: 4 }}>设为 0 表示不限速</div>
+            <div style={{ fontSize: 'var(--mub-font-size-xs)', color: 'var(--mub-text-muted)', marginTop: 4 }}>设为 0 表示不限速</div>
           </div>
         </div>
       </Modal>

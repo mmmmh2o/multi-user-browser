@@ -1,31 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Card,
-  Table,
-  Button,
-  Modal,
-  Form,
-  Input,
-  Space,
-  Popconfirm,
-  message,
-  Empty,
-  Tag,
+  Card, Table, Button, Modal, Form, Input, Space, Popconfirm,
+  message, Empty, Tag,
 } from 'antd';
 import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  UserSwitchOutlined,
-  CheckCircleFilled,
+  PlusOutlined, EditOutlined, DeleteOutlined,
+  UserSwitchOutlined, CheckCircleFilled,
 } from '@ant-design/icons';
 import { safeCall } from '../utils/ipcHelper';
 import CardIcon from '../components/CardIcon';
-
-const PRESET_COLORS = [
-  '#4f6ef7', '#52c41a', '#faad14', '#ff4d4f', '#7c5cfc',
-  '#13c2c2', '#eb2f96', '#fa8c16', '#2f54eb', '#8c8c8c',
-];
+import { PRESET_COLORS, DEFAULT_PAGINATION } from '../constants';
 
 /* ─── 颜色选择器组件 ─── */
 function ColorPicker({ value, onChange }) {
@@ -41,8 +25,8 @@ function ColorPicker({ value, onChange }) {
             borderRadius: '50%',
             background: c,
             cursor: 'pointer',
-            border: value === c ? '3px solid #1a1d2e' : '2px solid transparent',
-            transition: 'all 0.15s ease',
+            border: value === c ? '3px solid var(--mub-text)' : '2px solid transparent',
+            transition: 'all var(--mub-transition)',
             position: 'relative',
           }}
           onMouseEnter={(e) => {
@@ -58,7 +42,7 @@ function ColorPicker({ value, onChange }) {
               top: -4,
               right: -4,
               fontSize: 14,
-              color: '#1a1d2e',
+              color: 'var(--mub-text)',
               background: '#fff',
               borderRadius: '50%',
             }} />
@@ -75,14 +59,14 @@ export default function ContainerManager() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form] = Form.useForm();
-  const [color, setColor] = useState('#4f6ef7');
+  const [color, setColor] = useState('var(--mub-primary)');
 
   const loadContainers = async () => {
     setLoading(true);
     try {
       const data = await safeCall(() => window.electronAPI.getContainers(), []);
       setContainers(data || []);
-    } catch (error) {
+    } catch {
       message.error('加载容器失败');
     } finally {
       setLoading(false);
@@ -146,7 +130,7 @@ export default function ContainerManager() {
           width: 28,
           height: 28,
           borderRadius: '50%',
-          background: c || '#8c8c8c',
+          background: c || 'var(--mub-text-muted)',
           boxShadow: `0 2px 8px ${c || '#8c8c8c'}40`,
           border: '2px solid rgba(255,255,255,0.9)',
         }} />
@@ -156,8 +140,8 @@ export default function ContainerManager() {
       title: '名称',
       dataIndex: 'name',
       render: (name, record) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontWeight: 600, fontSize: 13.5 }}>{name}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--mub-space-sm)' }}>
+          <span style={{ fontWeight: 600, fontSize: 'var(--mub-font-size-base)' }}>{name}</span>
           {record.id === 'default' && (
             <Tag color="default" style={{ fontSize: 10, lineHeight: '16px', padding: '0 6px' }}>
               默认
@@ -178,7 +162,7 @@ export default function ContainerManager() {
           justifyContent: 'center',
           width: 36,
           height: 36,
-          borderRadius: 8,
+          borderRadius: 'var(--mub-radius-sm)',
           background: 'var(--mub-bg-table-hover)',
         }}>
           {icon || '🏷️'}
@@ -189,7 +173,7 @@ export default function ContainerManager() {
       title: '说明',
       dataIndex: 'id',
       render: (id) => (
-        <span style={{ color: 'var(--mub-text-secondary)', fontSize: 12.5 }}>
+        <span style={{ color: 'var(--mub-text-secondary)', fontSize: 'var(--mub-font-size-sm)' }}>
           {id === 'default' ? '系统默认身份，不可删除' : '独立 Cookie / Storage / Cache'}
         </span>
       ),
@@ -235,17 +219,7 @@ export default function ContainerManager() {
 
   return (
     <>
-      {/* 卡片头部图标样式注入 */}
-      <style>{`
-        .mub-container-card .ant-card-head-title > span {
-          display: flex !important;
-          align-items: center !important;
-          gap: 10px !important;
-        }
-      `}</style>
-
       <Card
-        className="mub-container-card"
         title={
           <span className="mub-card-title">
             <CardIcon icon={<UserSwitchOutlined />} color="#4f6ef7" />
@@ -263,7 +237,7 @@ export default function ContainerManager() {
           dataSource={containers}
           rowKey="id"
           loading={loading}
-          pagination={false}
+          pagination={DEFAULT_PAGINATION}
           locale={{
             emptyText: (
               <Empty
@@ -284,11 +258,11 @@ export default function ContainerManager() {
 
       <Modal
         title={
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--mub-space-sm)' }}>
             <div style={{
               width: 28,
               height: 28,
-              borderRadius: 8,
+              borderRadius: 'var(--mub-radius-sm)',
               background: color,
               boxShadow: `0 2px 8px ${color}40`,
             }} />

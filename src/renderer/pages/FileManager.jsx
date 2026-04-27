@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Card, Table, Button, Input, Space, Modal, Form, Popconfirm,
-  Empty, message, Tooltip, Breadcrumb,
+  Empty, message, Tooltip,
 } from 'antd';
 import {
   FolderOutlined, FileOutlined, PlusOutlined, DeleteOutlined,
@@ -9,6 +9,8 @@ import {
 } from '@ant-design/icons';
 import { safeCall } from '../utils/ipcHelper';
 import CardIcon from '../components/CardIcon';
+import { DEFAULT_PAGINATION } from '../constants';
+import { formatBytes, formatTime } from '../utils/format';
 
 export default function FileManager() {
   const [files, setFiles] = useState([]);
@@ -92,10 +94,7 @@ export default function FileManager() {
       width: 40,
       render: (isDir) => (
         <div className={`mub-table-icon${isDir ? ' mub-table-icon--folder' : ''}`}>
-          {isDir
-            ? <FolderOutlined />
-            : <FileOutlined />
-          }
+          {isDir ? <FolderOutlined /> : <FileOutlined />}
         </div>
       ),
     },
@@ -118,10 +117,7 @@ export default function FileManager() {
       width: 100,
       render: (size, record) => {
         if (record.isDirectory) return <span style={{ color: 'var(--mub-text-muted)' }}>-</span>;
-        if (!size) return <span style={{ color: 'var(--mub-text-muted)' }}>-</span>;
-        if (size < 1024) return `${size} B`;
-        if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
-        return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+        return <span>{formatBytes(size)}</span>;
       },
     },
     {
@@ -129,8 +125,8 @@ export default function FileManager() {
       dataIndex: 'modifiedAt',
       width: 150,
       render: (ts) => (
-        <span style={{ color: 'var(--mub-text-secondary)', fontSize: 12.5 }}>
-          {ts ? new Date(ts).toLocaleString('zh-CN') : '-'}
+        <span style={{ color: 'var(--mub-text-secondary)', fontSize: 'var(--mub-font-size-sm)' }}>
+          {formatTime(ts)}
         </span>
       ),
     },
@@ -154,7 +150,16 @@ export default function FileManager() {
     },
   ];
 
-  const pathParts = currentPath ? currentPath.split('/').filter(Boolean) : [];
+  const headerExtra = (
+    <div style={{ display: 'flex', gap: 'var(--mub-space-sm)' }}>
+      <Button icon={<PlusOutlined />} onClick={() => { setCreateType('folder'); setCreateModalOpen(true); }}>
+        新建文件夹
+      </Button>
+      <Button type="primary" icon={<PlusOutlined />} onClick={() => { setCreateType('file'); setCreateModalOpen(true); }}>
+        新建文件
+      </Button>
+    </div>
+  );
 
   return (
     <Card
@@ -164,21 +169,14 @@ export default function FileManager() {
           <span>文件管理</span>
         </span>
       }
-      extra={
-        <Space>
-          <Button icon={<PlusOutlined />} onClick={() => { setCreateType('folder'); setCreateModalOpen(true); }}>
-            新建文件夹
-          </Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => { setCreateType('file'); setCreateModalOpen(true); }}>
-            新建文件
-          </Button>
-        </Space>
-      }
+      extra={headerExtra}
     >
       {/* 路径导航栏 */}
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16,
-        padding: '8px 12px', background: '#fff', borderRadius: 8,
+        display: 'flex', alignItems: 'center', gap: 'var(--mub-space-sm)',
+        marginBottom: 'var(--mub-space-md)',
+        padding: 'var(--mub-space-sm) var(--mub-space-sm)',
+        background: '#fff', borderRadius: 'var(--mub-radius-sm)',
         border: '1px solid var(--mub-border-light)',
       }}>
         <Tooltip title="根目录">
@@ -190,8 +188,9 @@ export default function FileManager() {
             onClick={handleGoUp} disabled={!currentPath} style={{ flexShrink: 0 }} />
         </Tooltip>
         <div style={{
-          flex: 1, fontSize: 13, color: 'var(--mub-text-secondary)',
-          fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          flex: 1, fontSize: 'var(--mub-font-size-base)', color: 'var(--mub-text-secondary)',
+          fontFamily: 'var(--mub-font-mono)', overflow: 'hidden',
+          textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
           {currentPath || '/'}
         </div>
@@ -210,7 +209,7 @@ export default function FileManager() {
         dataSource={files}
         rowKey="path"
         loading={loading}
-        pagination={{ pageSize: 10, showTotal: (t) => `共 ${t} 项`, showSizeChanger: true, pageSizeOptions: ['10', '20', '50'] }}
+        pagination={DEFAULT_PAGINATION}
         locale={{
           emptyText: (
             <Empty

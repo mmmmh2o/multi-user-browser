@@ -51,8 +51,11 @@ export default function Settings() {
   const sectionIcon = (icon, color) => (
     <span style={{
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-      width: 24, height: 24, borderRadius: 6, background: `${color}18`,
-      color, fontSize: 13, marginRight: 6, verticalAlign: 'middle',
+      width: 24, height: 24, borderRadius: 'var(--mub-radius-xs)',
+      background: `${color}18`,
+      color, fontSize: 'var(--mub-font-size-base)',
+      marginRight: 'var(--mub-space-xs)',
+      verticalAlign: 'middle',
     }}>
       {icon}
     </span>
@@ -80,7 +83,7 @@ export default function Settings() {
       <Spin spinning={loading}>
         <Form form={form} layout="vertical" style={{ maxWidth: 560 }}>
           <Divider orientation="left" orientationMargin={0}>
-            {sectionIcon('🌐', '#4f6ef7')} 浏览器
+            {sectionIcon('🌐', 'var(--mub-primary)')} 浏览器
           </Divider>
 
           <Form.Item name="homepage" label="主页地址"
