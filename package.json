@@ -1,6 +1,6 @@
 {
   "name": "multi-user-browser",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "多用户并发管理浏览器 - Electron桌面应用",
   "main": "src/main/index.js",
   "author": "mmmmh2o",
