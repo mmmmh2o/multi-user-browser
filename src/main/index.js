@@ -4,6 +4,21 @@ const log = require('electron-log');
 const { registerAllHandlers } = require('./ipc');
 const { addBrowserDownload } = require('./ipc/downloadHandlers');
 
+// ========== GPU / 渲染稳定性修复 ==========
+// 禁用硬件加速，避免 GPU 驱动兼容问题导致页面崩溃
+app.disableHardwareAcceleration();
+// 禁用 GPU 合成，减少渲染进程崩溃
+app.commandLine.appendSwitch('disable-gpu-compositing');
+// 禁用 GPU 光栅化
+app.commandLine.appendSwitch('disable-gpu-rasterization');
+// 禁用 GPU sandbox（与 app sandbox 冲突时会崩溃）
+app.commandLine.appendSwitch('no-sandbox');
+// 使用 SwiftShader 软件渲染作为 fallback
+app.commandLine.appendSwitch('use-gl', 'swiftshader');
+// 禁用 Chromium 的渲染器沙箱（webview 崩溃常见原因）
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
+app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
+
 // 配置日志
 try {
   log.transports.file.resolvePath = () => path.join(app.getPath('userData'), 'logs/main.log');
@@ -102,8 +117,10 @@ function createWindow() {
       preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true,
+      // sandbox 移除 — 与 webview sandbox=no 冲突会导致页面崩溃
       webviewTag: true,
+      // 允许 webview 使用 Node API（preload 需要）
+      sandbox: false,
     },
   });
 
@@ -119,6 +136,19 @@ function createWindow() {
     mainWindow = null;
   });
 
+  // 渲染进程崩溃恢复
+  mainWindow.webContents.on('render-process-gone', (event, details) => {
+    log.error(`[崩溃] 渲染进程异常退出: reason=${details.reason}, exitCode=${details.exitCode}`);
+    if (details.reason === 'crashed' || details.reason === 'oom') {
+      log.info('[崩溃] 尝试重新加载主窗口...');
+      setTimeout(() => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.reload();
+        }
+      }, 1000);
+    }
+  });
+
   log.info('主窗口已创建');
 }
 
@@ -126,8 +156,11 @@ app.whenReady().then(() => {
   // 提供 webview preload 路径（sandbox 下 preload 无法用 require('path')）
   ipcMain.handle('__get-webview-preload-path__', () => {
     try {
-      return path.join(__dirname, '../main/preload/webview-preload.js');
-    } catch {
+      const preloadPath = path.join(__dirname, '../main/preload/webview-preload.js');
+      log.info(`[Preload] webview preload 路径: ${preloadPath}`);
+      return preloadPath;
+    } catch (e) {
+      log.error('[Preload] 获取 webview preload 路径失败:', e);
       return '';
     }
   });

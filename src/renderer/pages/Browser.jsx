@@ -195,6 +195,36 @@ export default function Browser() {
         message.error(`加载失败: ${e.errorDescription}`);
       }
     });
+
+    // 页面崩溃恢复 — 自动重新加载
+    webview.addEventListener('crashed', () => {
+      console.error(`[MUB] webview 崩溃: ${key}, 正在恢复...`);
+      message.warning('页面崩溃，正在自动恢复...');
+      setTabs((prev) => prev.map((t) => t.key === key ? { ...t, isLoading: true, title: '正在恢复...' } : t));
+      // 延迟重新加载，让进程有时间清理
+      setTimeout(() => {
+        try {
+          const wv = webviewRefs.current[key];
+          if (wv) {
+            const tab = tabs.find((t) => t.key === key);
+            if (tab && tab.url) wv.reload();
+          }
+        } catch (e) {
+          console.error('[MUB] 恢复失败:', e);
+        }
+      }, 1000);
+    });
+
+    // 渲染进程挂起检测
+    webview.addEventListener('unresponsive', () => {
+      console.warn(`[MUB] webview 无响应: ${key}`);
+      message.warning('页面无响应，正在等待恢复...');
+    });
+
+    webview.addEventListener('responsive', () => {
+      console.info(`[MUB] webview 已恢复响应: ${key}`);
+    });
+
     webviewRefs.current[key] = webview;
   }, [addNewTab, tabs]);
 
@@ -379,7 +409,12 @@ export default function Browser() {
                   <webview
                     key={`${tab.key}-${tab.containerId}`}
                     ref={(el) => {
-                      if (el && !webviewRefs.current[tab.key]) {
+                      if (!el) return;
+                      // 如果已有旧 ref（preload 变化导致重渲染），先清理再重建
+                      if (webviewRefs.current[tab.key] && webviewRefs.current[tab.key] !== el) {
+                        delete webviewRefs.current[tab.key];
+                      }
+                      if (!webviewRefs.current[tab.key]) {
                         handleWebviewEvents(tab.key, el);
                         // 确保 webview 加载正确的 URL（React 对 webview src 处理不可靠）
                         if (tab.url && tab.url !== NEW_TAB_URL && tab.url !== 'about:blank') {
@@ -390,7 +425,8 @@ export default function Browser() {
                     partition={getPartition(tab.containerId)}
                     style={{ width: '100%', height: '100%', flex: 1 }}
                     preload={preloadReady ? `file://${window.__MUB_PRELOAD_PATH__}` : undefined}
-                    webpreferences="contextIsolation=yes,nodeIntegration=no,sandbox=no"
+                    webpreferences="contextIsolation=yes,nodeIntegration=no,sandbox=no,spellcheck=no"
+                    allowpopups="true"
                   />
                 )
               }
