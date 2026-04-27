@@ -112,62 +112,27 @@ function interceptDownloadsOnSession(session, partition) {
  * 监听所有 web-contents 创建，为 webview 注册下载拦截 + 新窗口拦截
  */
 app.on('web-contents-created', (event, contents) => {
-  const type = contents.getType();
-  log.info(`[web-contents-created] type=${type} id=${contents.id}`);
-
-  if (type === 'webview') {
+  if (contents.getType() === 'webview') {
     const session = contents.session;
     const partition = session.partition || 'default';
     interceptDownloadsOnSession(session, partition);
 
-    // 方案 1: setWindowOpenHandler
-    try {
-      contents.setWindowOpenHandler(({ url, disposition }) => {
-        log.info(`[setWindowOpenHandler] url=${url} disposition=${disposition}`);
-        if (url && url !== 'about:blank' && mainWindow && !mainWindow.isDestroyed()) {
-          log.info(`[setWindowOpenHandler] → IPC open-url-in-tab: ${url}`);
-          mainWindow.webContents.send('open-url-in-tab', url);
-        }
-        return { action: 'deny' };
-      });
-      log.info(`[setWindowOpenHandler] registered on webview ${contents.id}`);
-    } catch (e) {
-      log.error(`[setWindowOpenHandler] failed:`, e.message);
-    }
-
-    // 方案 2: will-navigate 拦截（target=_blank 在某些情况下走这条路）
-    contents.on('will-navigate', (event, url) => {
-      log.info(`[will-navigate] url=${url}`);
-    });
-
-    // 方案 3: 监听 console 输出，方便调试
-    contents.on('console-message', (e, level, message) => {
-      if (message.includes('[MUB-DEBUG]')) {
-        log.info(`[webview console] ${message}`);
+    // setWindowOpenHandler 作为备用拦截（preload 已做主要拦截）
+    contents.setWindowOpenHandler(({ url }) => {
+      log.info(`[setWindowOpenHandler] url=${url}`);
+      if (url && url !== 'about:blank' && mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('open-url-in-tab', url);
       }
+      return { action: 'deny' };
     });
+  }
+});
 
-    // 方案 4: dom-ready 后注入点击拦截脚本
-    // 将 target=_blank 链接改为通过 IPC 在新标签页打开
-    contents.on('dom-ready', () => {
-      log.info(`[dom-ready] webview ${contents.id} ready, injecting link interceptor`);
-      contents.executeJavaScript(`
-        document.addEventListener('click', function(e) {
-          var link = e.target.closest('a[href]');
-          if (link && link.target === '_blank') {
-            e.preventDefault();
-            var url = link.href;
-            console.log('[MUB-DEBUG] intercepted target=_blank: ' + url);
-            // 通过 webview 的 postMessage 通知渲染进程
-            // 渲染进程会监听 webview 的 console-message 来捕获
-            // 但我们直接用 window.open(url, '_self') 让 will-navigate 来处理
-            // 或者直接在同一窗口导航
-            window.location.href = url;
-          }
-        }, true);
-        console.log('[MUB-DEBUG] link interceptor injected');
-      `).catch(() => {});
-    });
+// 监听 webview preload 发来的新标签页请求（来自 preload 的 ipcRenderer.send）
+ipcMain.on('open-url-in-tab', (event, url) => {
+  log.info(`[ipcMain] open-url-in-tab: ${url}`);
+  if (url && mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('open-url-in-tab', url);
   }
 });
 

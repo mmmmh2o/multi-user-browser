@@ -5,10 +5,37 @@
  * 1. 从主进程获取当前用户的已启用脚本
  * 2. 注入 UserScript 到页面
  * 3. 提供 GM_* 风格的 API 桥接
+ * 4. 拦截 target=_blank 链接和 window.open()，转为新标签页
  */
 
 const { ipcRenderer } = require('electron');
 const { parseUserScriptMeta, matchesPage, extractCode } = require('../utils/userScriptParser');
+
+// ========== 新标签页拦截 ==========
+// 拦截 target=_blank 链接点击，通过 IPC 通知主进程在新标签页打开
+document.addEventListener('click', (e) => {
+  const link = e.target.closest('a[href]');
+  if (link && link.target === '_blank') {
+    e.preventDefault();
+    const url = link.href;
+    if (url && !url.startsWith('javascript:')) {
+      ipcRenderer.send('open-url-in-tab', url);
+    }
+  }
+}, true);
+
+// 拦截 window.open() 调用
+const originalWindowOpen = window.open;
+window.open = function(url, target, features) {
+  // UserScript 的 GM_openInTab 等可能调用 window.open
+  // 如果 target 不是 _self 且不是当前窗口，转为新标签页
+  if (url && target !== '_self' && target !== '_top' && target !== '_parent') {
+    ipcRenderer.send('open-url-in-tab', url);
+    return null;
+  }
+  // 其他情况（如 UserScript 需要在当前窗口打开）走原始逻辑
+  return originalWindowOpen.call(window, url, target, features);
+};
 
 /**
  * 注入单个脚本到页面
