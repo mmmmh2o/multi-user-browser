@@ -55,7 +55,7 @@ function SidebarLogo({ wide }) {
 
 /* ─── 收缩态菜单（只显示图标） ─── */
 function SidebarMenuCompact({ navigate, pathname }) {
-  const flatItems = menuItems.filter(i => !i.type).flatMap(i => i.children || [i]);
+  const flatItems = menuItems.filter(i => i.type !== 'divider').flatMap(i => i.children || [i]);
   return (
     <div style={{ padding: '8px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, flex: 1 }}>
       {flatItems.map((item) => {
