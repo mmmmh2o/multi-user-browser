@@ -59,7 +59,18 @@ export default function Browser() {
       });
     };
     window.addEventListener('mub-navigate', handleNavigateEvent);
-    return () => window.removeEventListener('mub-navigate', handleNavigateEvent);
+
+    // 监听主进程发来的新窗口 URL → 在新标签页打开
+    const handleOpenInTab = (url) => {
+      if (!url) return;
+      addNewTab(url);
+    };
+    window.electronAPI?.onOpenUrlInTab?.(handleOpenInTab);
+
+    return () => {
+      window.removeEventListener('mub-navigate', handleNavigateEvent);
+      window.electronAPI?.removeOpenUrlInTab?.();
+    };
   }, []);
 
   const loadContainers = async () => {
@@ -153,7 +164,9 @@ export default function Browser() {
   const handleWebviewEvents = useCallback((key, webview) => {
     if (!webview) return;
 
-    // 新窗口拦截 → 在新标签中打开
+    // [已废弃] new-window 事件在 Electron 28+ 的 webview 上不生效
+    // 新窗口拦截已移至主进程 setWindowOpenHandler，通过 IPC 通知此处开新标签
+    // 保留此监听作为低版本 Electron 的 fallback
     webview.addEventListener('new-window', (e) => {
       e.preventDefault();
       const parentTab = tabs.find((t) => t.key === key);
@@ -410,7 +423,6 @@ export default function Browser() {
                     partition={getPartition(tab.containerId)}
                     style={{ width: '100%', height: '100%', flex: 1 }}
                     preload={preloadReady ? `file://${window.__MUB_PRELOAD_PATH__}` : undefined}
-                    allowpopups="true"
                   />
                 )
               }

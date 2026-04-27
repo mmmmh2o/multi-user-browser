@@ -96,13 +96,23 @@ function interceptDownloadsOnSession(session, partition) {
 }
 
 /**
- * 监听所有 web-contents 创建，为 webview 注册下载拦截
+ * 监听所有 web-contents 创建，为 webview 注册下载拦截 + 新窗口拦截
  */
 app.on('web-contents-created', (event, contents) => {
   if (contents.getType() === 'webview') {
     const session = contents.session;
     const partition = session.partition || 'default';
     interceptDownloadsOnSession(session, partition);
+
+    // 拦截 webview 内的 window.open / target=_blank
+    // 通过 IPC 通知渲染进程在新标签页中打开，而不是弹新窗口
+    contents.setWindowOpenHandler(({ url }) => {
+      log.info(`[新窗口拦截] 通知渲染进程开新标签: ${url}`);
+      if (url && url !== 'about:blank' && mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('open-url-in-tab', url);
+      }
+      return { action: 'deny' };
+    });
   }
 });
 

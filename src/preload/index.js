@@ -88,6 +88,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onNotification: (callback) => {
     ipcRenderer.on('notification', (event, data) => callback(data));
   },
+  onOpenUrlInTab: (callback) => {
+    ipcRenderer.on('open-url-in-tab', (event, url) => callback(url));
+  },
+  removeOpenUrlInTab: () => {
+    ipcRenderer.removeAllListeners('open-url-in-tab');
+  },
   removeAllListeners: (channel) => {
     ipcRenderer.removeAllListeners(channel);
   },
