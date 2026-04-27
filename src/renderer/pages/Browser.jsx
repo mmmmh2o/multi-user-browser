@@ -429,6 +429,7 @@ export default function Browser() {
                     style={{ width: '100%', height: '100%', flex: 1 }}
                     preload={preloadReady ? `file://${window.__MUB_PRELOAD_PATH__}` : undefined}
                     webpreferences="contextIsolation=no,sandbox=no,nodeIntegration=yes"
+                    allowpopups
                   />
                 )
               }
