@@ -174,7 +174,7 @@ export default function MainLayout() {
   };
 
   return (
-    <Layout style={{ height: '100vh', overflow: 'hidden' }}>
+    <Layout style={{ height: '100vh', overflow: 'hidden', display: 'flex', flexDirection: 'row' }}>
       {/* ─── 侧边栏 ─── */}
       <div
         className="mub-sidebar"
