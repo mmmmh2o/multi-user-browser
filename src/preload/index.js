@@ -4,11 +4,24 @@ const { contextBridge, ipcRenderer } = require('electron');
  * Preload 脚本 - 通过 contextBridge 安全暴露 API 给渲染进程
  */
 
-// 暴露 webview preload 路径
+// 暴露 webview preload 路径（异步获取 + 同步 fallback）
 ipcRenderer.invoke('__get-webview-preload-path__').then((p) => {
-  contextBridge.exposeInMainWorld('__MUB_PRELOAD_PATH__', p || '');
+  if (p) {
+    contextBridge.exposeInMainWorld('__MUB_PRELOAD_PATH__', p);
+  } else {
+    // fallback: 通过 __dirname 推算
+    const path = require('path');
+    const fallback = path.join(__dirname, '..', 'main', 'preload', 'webview-preload.js');
+    contextBridge.exposeInMainWorld('__MUB_PRELOAD_PATH__', fallback);
+  }
 }).catch(() => {
-  contextBridge.exposeInMainWorld('__MUB_PRELOAD_PATH__', '');
+  try {
+    const path = require('path');
+    const fallback = path.join(__dirname, '..', 'main', 'preload', 'webview-preload.js');
+    contextBridge.exposeInMainWorld('__MUB_PRELOAD_PATH__', fallback);
+  } catch {
+    contextBridge.exposeInMainWorld('__MUB_PRELOAD_PATH__', '');
+  }
 });
 
 function safeInvoke(channel, ...args) {

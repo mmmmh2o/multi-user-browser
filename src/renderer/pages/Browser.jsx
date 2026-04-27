@@ -423,8 +423,7 @@ export default function Browser() {
                     partition={getPartition(tab.containerId)}
                     style={{ width: '100%', height: '100%', flex: 1 }}
                     preload={preloadReady ? `file://${window.__MUB_PRELOAD_PATH__}` : undefined}
-                    nodeintegration
-                    contextisolation="false"
+                    webpreferences="contextIsolation=no,sandbox=no,nodeIntegration=yes"
                   />
                 )
               }
