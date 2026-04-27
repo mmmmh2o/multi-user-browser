@@ -26,6 +26,7 @@ ipcRenderer.invoke('__get-webview-preload-path__').then((p) => {
 
 function safeInvoke(channel, ...args) {
   return ipcRenderer.invoke(channel, ...args).catch((err) => {
+    // eslint-disable-next-line no-console
     console.error(`[Preload] IPC [${channel}] 调用失败:`, err);
     return null;
   });

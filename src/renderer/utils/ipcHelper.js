@@ -36,6 +36,7 @@ export async function safeCall(apiFn, fallback = null, timeout = IPC_TIMEOUT) {
   );
 
   return Promise.race([callPromise, timeoutPromise]).catch((err) => {
+    // eslint-disable-next-line no-console
     console.error('[IPC] 调用失败:', err.message);
     return fallback;
   });

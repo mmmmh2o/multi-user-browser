@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const log = require('electron-log');
 const { registerAllHandlers } = require('./ipc');
@@ -57,7 +57,6 @@ function interceptDownloadsOnSession(session, partition) {
     // 先不阻止原生下载，异步尝试 aria2
     // 如果 aria2 可用，再取消原生下载并转交 aria2
     let nativeDownloadStarted = false;
-    let nativeSavePath = null;
 
     // 原生下载进度监听（作为 fallback）
     item.on('updated', () => {

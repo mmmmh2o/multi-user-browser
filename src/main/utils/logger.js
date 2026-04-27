@@ -21,6 +21,7 @@ function initLogger() {
     log.info('日志系统已初始化');
   } catch (error) {
     // app 可能未就绪
+    // eslint-disable-next-line no-console
     console.log('日志初始化延迟:', error.message);
   }
 }

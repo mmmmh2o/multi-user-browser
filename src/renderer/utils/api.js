@@ -8,6 +8,7 @@
 const api = window.electronAPI;
 
 if (!api) {
+  // eslint-disable-next-line no-console
   console.warn('electronAPI 未加载，请确保在 Electron 环境中运行');
 }
 
@@ -24,6 +25,7 @@ async function call(method, ...args) {
   try {
     return await api[method](...args);
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error(`API 调用失败: ${method}`, error);
     throw error;
   }

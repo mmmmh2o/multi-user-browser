@@ -59,7 +59,9 @@ function createGMApi(scriptId) {
         const store = JSON.parse(localStorage.getItem(storageKey) || '{}');
         delete store[key];
         localStorage.setItem(storageKey, JSON.stringify(store));
-      } catch {}
+      } catch {
+        // localStorage 不可用时静默忽略
+      }
     },
     GM_listValues: () => {
       try {
