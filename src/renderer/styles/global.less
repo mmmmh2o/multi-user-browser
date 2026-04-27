@@ -336,6 +336,92 @@ body {
   gap: 10px !important;
 }
 
+/* ---------- Page Header (管理页面) ---------- */
+.mub-page-header {
+  background: linear-gradient(180deg, #fff 0%, var(--mub-bg) 100%) !important;
+  padding: 0 28px !important;
+  border-bottom: 1px solid var(--mub-border-light) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  height: 56px !important;
+  line-height: 56px !important;
+  box-shadow: none !important;
+  position: relative;
+}
+.mub-page-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--mub-primary) 0%, transparent 100%);
+  opacity: 0.3;
+}
+.mub-page-title {
+  margin: 0;
+  font-size: var(--mub-font-size-lg);
+  font-weight: 600;
+  color: var(--mub-text);
+  letter-spacing: -0.2;
+}
+
+/* ---------- Page Content ---------- */
+.mub-page-content {
+  padding: var(--mub-space-lg) !important;
+  background: var(--mub-bg) !important;
+  overflow: auto !important;
+}
+
+/* ---------- Browser Floating Buttons ---------- */
+.mub-float-btn {
+  position: fixed !important;
+  top: 14px;
+  left: 14px;
+  z-index: 1000;
+  background: rgba(30,34,53,0.85) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  color: #fff !important;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15) !important;
+  width: 38px !important;
+  height: 38px !important;
+  transition: all var(--mub-transition) !important;
+}
+.mub-float-btn:hover {
+  background: rgba(30,34,53,0.95) !important;
+  box-shadow: 0 4px 16px rgba(79,110,247,0.25) !important;
+  transform: scale(1.05);
+}
+.mub-float-btn--right {
+  left: auto;
+  right: 14px;
+  border-radius: 50% !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---------- Route Transition ---------- */
+.mub-route-enter {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.mub-route-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* ---------- Layout Transition ---------- */
+.ant-layout-sider {
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.ant-layout {
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
 /* ---------- Transitions ---------- */
 .fade-enter {
   opacity: 0;

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Layout, Menu, Drawer, Button, Tooltip } from 'antd';
 import { MenuOutlined } from '@ant-design/icons';
 import NotificationBell from '../components/NotificationBell';
 import ErrorBoundary from '../components/ErrorBoundary';
+import RouteTransition from '../components/RouteTransition';
 import { menuItems, findMenuLabel } from '../config/menu';
 
 const SIDEBAR_STYLE = {
@@ -85,61 +86,47 @@ function SidebarMenu({ navigate, pathname, mode, onClose }) {
   );
 }
 
+/* ─── 浮动操作按钮（浏览器页面用） ─── */
+function BrowserFloatingButtons({ onOpenMenu }) {
+  return (
+    <>
+      <Tooltip title="菜单" placement="right">
+        <Button
+          icon={<MenuOutlined />}
+          shape="circle"
+          size="large"
+          onClick={onOpenMenu}
+          className="mub-float-btn"
+        />
+      </Tooltip>
+      <div className="mub-float-btn mub-float-btn--right">
+        <NotificationBell darkMode />
+      </div>
+    </>
+  );
+}
+
 export default function MainLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [transitioning, setTransitioning] = useState(false);
 
   const isBrowserPage = location.pathname === '/browser';
+
+  // 路由切换时触发过渡动画
+  useEffect(() => {
+    setTransitioning(true);
+    const timer = setTimeout(() => setTransitioning(false), 200);
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
 
   /* ─── 浏览器页面：全屏 + 浮动入口 ─── */
   if (isBrowserPage) {
     return (
       <div style={{ height: '100vh', position: 'relative' }}>
-        {/* 浮动菜单按钮 */}
-        <Tooltip title="菜单" placement="right">
-          <Button
-            icon={<MenuOutlined />}
-            shape="circle"
-            size="large"
-            onClick={() => setDrawerOpen(true)}
-            style={{
-              position: 'fixed',
-              top: 14,
-              left: 14,
-              zIndex: 1000,
-              background: 'rgba(30,34,53,0.85)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              color: '#fff',
-              backdropFilter: 'blur(12px)',
-              boxShadow: 'var(--mub-shadow-md)',
-              width: 38,
-              height: 38,
-            }}
-          />
-        </Tooltip>
+        <BrowserFloatingButtons onOpenMenu={() => setDrawerOpen(true)} />
 
-        {/* 浮动通知铃铛 */}
-        <div style={{
-          position: 'fixed',
-          top: 14,
-          right: 14,
-          zIndex: 1000,
-          background: 'rgba(30,34,53,0.85)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          backdropFilter: 'blur(12px)',
-          borderRadius: '50%',
-          width: 38,
-          height: 38,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: 'var(--mub-shadow-md)',
-        }}>
-          <NotificationBell darkMode />
-        </div>
-
-        {/* 侧边栏抽屉 */}
         <Drawer
           placement="left"
           open={drawerOpen}
@@ -163,14 +150,22 @@ export default function MainLayout() {
           />
         </Drawer>
 
-        <ErrorBoundary>
-          <Outlet />
-        </ErrorBoundary>
+        <div
+          style={{
+            opacity: transitioning ? 0 : 1,
+            transition: 'opacity 0.2s ease',
+            height: '100%',
+          }}
+        >
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
+        </div>
       </div>
     );
   }
 
-  /* ─── 管理页面：深色侧边栏 + 白色主区域 ─── */
+  /* ─── 管理页面：深色侧边栏 + 主区域 ─── */
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Layout.Sider
@@ -186,37 +181,26 @@ export default function MainLayout() {
       </Layout.Sider>
 
       <Layout>
-        <Layout.Header style={{
-          background: '#fff',
-          padding: '0 28px',
-          borderBottom: '1px solid var(--mub-border-light)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          height: 56,
-          lineHeight: '56px',
-          boxShadow: 'var(--mub-shadow-sm)',
-        }}>
-          <h2 style={{
-            margin: 0,
-            fontSize: 'var(--mub-font-size-lg)',
-            fontWeight: 600,
-            color: 'var(--mub-text)',
-            letterSpacing: -0.2,
-          }}>
+        {/* Header：深色底边框过渡，不再是纯白 */}
+        <Layout.Header className="mub-page-header">
+          <h2 className="mub-page-title">
             {findMenuLabel(location.pathname)}
           </h2>
           <NotificationBell />
         </Layout.Header>
 
-        <Layout.Content style={{
-          padding: 'var(--mub-space-lg)',
-          background: 'var(--mub-bg)',
-          overflow: 'auto',
-        }}>
-          <ErrorBoundary>
-            <Outlet />
-          </ErrorBoundary>
+        <Layout.Content className="mub-page-content">
+          <div
+            style={{
+              opacity: transitioning ? 0 : 1,
+              transform: transitioning ? 'translateY(4px)' : 'translateY(0)',
+              transition: 'opacity 0.2s ease, transform 0.2s ease',
+            }}
+          >
+            <ErrorBoundary>
+              <Outlet />
+            </ErrorBoundary>
+          </div>
         </Layout.Content>
       </Layout>
     </Layout>
