@@ -43,11 +43,12 @@ export default function NotificationBell() {
 
   const dropdownContent = (
     <div
+      className="mub-notification-dropdown"
       style={{
         width: 320,
         maxHeight: 400,
         overflow: 'auto',
-        background: '#fff',
+        background: 'var(--mub-bg-card, #fff)',
         borderRadius: 8,
         boxShadow: '0 6px 16px rgba(0,0,0,0.08)',
         padding: 8,

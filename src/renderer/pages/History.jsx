@@ -6,6 +6,7 @@ import {
   DeleteOutlined, HistoryOutlined, SearchOutlined, ClearOutlined, GlobalOutlined,
 } from '@ant-design/icons';
 import { safeCall } from '../utils/ipcHelper';
+import CardIcon from '../components/CardIcon';
 
 export default function History() {
   const [history, setHistory] = useState([]);
@@ -59,12 +60,8 @@ export default function History() {
       dataIndex: 'favicon',
       width: 40,
       render: () => (
-        <div style={{
-          width: 28, height: 28, borderRadius: 6,
-          background: 'var(--mub-bg-table-hover)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <GlobalOutlined style={{ color: 'var(--mub-text-muted)', fontSize: 13 }} />
+        <div className="mub-table-icon">
+          <GlobalOutlined />
         </div>
       ),
     },
@@ -126,15 +123,8 @@ export default function History() {
   return (
     <Card
       title={
-        <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{
-            width: 32, height: 32, borderRadius: 8,
-            background: '#8b5cf618', color: '#8b5cf6',
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 15,
-          }}>
-            <HistoryOutlined />
-          </span>
+        <span className="mub-card-title">
+          <CardIcon icon={<HistoryOutlined />} color="#8b5cf6" />
           <span>历史记录</span>
         </span>
       }
@@ -165,15 +155,13 @@ export default function History() {
         dataSource={filtered}
         rowKey="id"
         loading={loading}
-        pagination={{ pageSize: 15, showTotal: (t) => `共 ${t} 条` }}
+        pagination={{ pageSize: 10, showTotal: (t) => `共 ${t} 条`, showSizeChanger: true, pageSizeOptions: ['10', '20', '50'] }}
         locale={{
           emptyText: (
             <Empty
               description={<span>
                 暂无历史记录<br />
-                <span style={{ color: 'var(--mub-text-muted)', fontSize: 12 }}>
-                  浏览网页后会自动记录
-                </span>
+                <span className="mub-empty-hint">浏览网页后会自动记录</span>
               </span>}
             />
           ),

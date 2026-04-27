@@ -6,6 +6,7 @@ import {
   DeleteOutlined, StarFilled, SearchOutlined, GlobalOutlined,
 } from '@ant-design/icons';
 import { safeCall } from '../utils/ipcHelper';
+import CardIcon from '../components/CardIcon';
 
 export default function Bookmarks() {
   const [bookmarks, setBookmarks] = useState([]);
@@ -49,14 +50,10 @@ export default function Bookmarks() {
       dataIndex: 'favicon',
       width: 40,
       render: (favicon) => (
-        <div style={{
-          width: 28, height: 28, borderRadius: 6,
-          background: 'var(--mub-bg-table-hover)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
+        <div className="mub-table-icon">
           {favicon
             ? <img src={favicon} alt="" style={{ width: 16, height: 16 }} />
-            : <GlobalOutlined style={{ color: 'var(--mub-text-muted)', fontSize: 13 }} />
+            : <GlobalOutlined />
           }
         </div>
       ),
@@ -119,15 +116,8 @@ export default function Bookmarks() {
   return (
     <Card
       title={
-        <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{
-            width: 32, height: 32, borderRadius: 8,
-            background: '#faad1418', color: '#faad14',
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 15,
-          }}>
-            <StarFilled />
-          </span>
+        <span className="mub-card-title">
+          <CardIcon icon={<StarFilled />} color="#faad14" />
           <span>书签</span>
         </span>
       }
@@ -147,15 +137,13 @@ export default function Bookmarks() {
         dataSource={filtered}
         rowKey="id"
         loading={loading}
-        pagination={{ pageSize: 15, showTotal: (t) => `共 ${t} 条` }}
+        pagination={{ pageSize: 10, showTotal: (t) => `共 ${t} 条`, showSizeChanger: true, pageSizeOptions: ['10', '20', '50'] }}
         locale={{
           emptyText: (
             <Empty
               description={<span>
                 暂无书签<br />
-                <span style={{ color: '#8c8c8c', fontSize: 12 }}>
-                  在浏览器中点击 ⭐ 收藏网页
-                </span>
+                <span className="mub-empty-hint">在浏览器中点击 ⭐ 收藏网页</span>
               </span>}
             />
           ),

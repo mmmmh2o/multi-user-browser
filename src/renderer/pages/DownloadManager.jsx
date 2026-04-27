@@ -135,10 +135,10 @@ function EmptyState({ hasSearch, onAdd }) {
       }}>
         <DownloadOutlined style={{ fontSize: 32, color: '#1677ff' }} />
       </div>
-      <div style={{ fontSize: 15, fontWeight: 500, color: '#262626' }}>
+      <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--mub-text)' }}>
         {hasSearch ? '没有找到匹配的下载' : '还没有下载任务'}
       </div>
-      <div style={{ fontSize: 13, color: '#8c8c8c', textAlign: 'center', maxWidth: 280, lineHeight: 1.6 }}>
+      <div className="mub-empty-hint" style={{ textAlign: 'center', maxWidth: 280, lineHeight: 1.6 }}>
         {hasSearch
           ? '试试其他关键词，或清除搜索条件'
           : '在浏览器中点击下载链接会自动接管，或者手动添加一个下载任务'}

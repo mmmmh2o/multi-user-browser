@@ -236,6 +236,42 @@ body {
   box-shadow: 0 0 0 2px rgba(255,255,255,0.8);
 }
 
+/* ---------- Table Icon Cell ---------- */
+.mub-table-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--mub-bg-table-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.mub-table-icon--folder {
+  background: #fff7e6;
+}
+.mub-table-icon--folder .anticon {
+  color: #faad14;
+  font-size: 15px;
+}
+.mub-table-icon .anticon {
+  color: var(--mub-text-muted);
+  font-size: 13px;
+}
+
+/* ---------- Card Title ---------- */
+.mub-card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ---------- Empty Hint ---------- */
+.mub-empty-hint {
+  color: var(--mub-text-muted);
+  font-size: 12px;
+}
+
 /* ---------- Transitions ---------- */
 .fade-enter {
   opacity: 0;

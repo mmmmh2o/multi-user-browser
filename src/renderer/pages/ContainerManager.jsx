@@ -20,6 +20,7 @@ import {
   CheckCircleFilled,
 } from '@ant-design/icons';
 import { safeCall } from '../utils/ipcHelper';
+import CardIcon from '../components/CardIcon';
 
 const PRESET_COLORS = [
   '#4f6ef7', '#52c41a', '#faad14', '#ff4d4f', '#7c5cfc',
@@ -246,15 +247,8 @@ export default function ContainerManager() {
       <Card
         className="mub-container-card"
         title={
-          <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{
-              width: 32, height: 32, borderRadius: 8,
-              background: '#4f6ef718', color: '#4f6ef7',
-              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 15,
-            }}>
-              <UserSwitchOutlined />
-            </span>
+          <span className="mub-card-title">
+            <CardIcon icon={<UserSwitchOutlined />} color="#4f6ef7" />
             <span>身份容器</span>
           </span>
         }
@@ -278,7 +272,7 @@ export default function ContainerManager() {
                   <span>
                     暂无自定义容器
                     <br />
-                    <span style={{ color: 'var(--mub-text-muted)', fontSize: 12 }}>
+                    <span className="mub-empty-hint">
                       创建容器后，在浏览器标签页右键可切换身份
                     </span>
                   </span>

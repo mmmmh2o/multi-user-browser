@@ -5,6 +5,7 @@ import {
 } from 'antd';
 import { SaveOutlined, UndoOutlined, SettingOutlined } from '@ant-design/icons';
 import { safeCall } from '../utils/ipcHelper';
+import CardIcon from '../components/CardIcon';
 
 export default function Settings() {
   const [form] = Form.useForm();
@@ -60,15 +61,8 @@ export default function Settings() {
   return (
     <Card
       title={
-        <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{
-            width: 32, height: 32, borderRadius: 8,
-            background: '#6b728018', color: '#6b7280',
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 15,
-          }}>
-            <SettingOutlined />
-          </span>
+        <span className="mub-card-title">
+          <CardIcon icon={<SettingOutlined />} color="#6b7280" />
           <span>设置</span>
         </span>
       }

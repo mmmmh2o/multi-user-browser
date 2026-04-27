@@ -8,6 +8,7 @@ import {
   EditOutlined, ArrowUpOutlined, HomeOutlined,
 } from '@ant-design/icons';
 import { safeCall } from '../utils/ipcHelper';
+import CardIcon from '../components/CardIcon';
 
 export default function FileManager() {
   const [files, setFiles] = useState([]);
@@ -90,14 +91,10 @@ export default function FileManager() {
       dataIndex: 'isDirectory',
       width: 40,
       render: (isDir) => (
-        <div style={{
-          width: 28, height: 28, borderRadius: 6,
-          background: isDir ? '#fff7e6' : 'var(--mub-bg-table-hover)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
+        <div className={`mub-table-icon${isDir ? ' mub-table-icon--folder' : ''}`}>
           {isDir
-            ? <FolderOutlined style={{ color: '#faad14', fontSize: 15 }} />
-            : <FileOutlined style={{ color: 'var(--mub-text-muted)', fontSize: 13 }} />
+            ? <FolderOutlined />
+            : <FileOutlined />
           }
         </div>
       ),
@@ -162,15 +159,8 @@ export default function FileManager() {
   return (
     <Card
       title={
-        <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{
-            width: 32, height: 32, borderRadius: 8,
-            background: '#faad1418', color: '#faad14',
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 15,
-          }}>
-            <FolderOutlined />
-          </span>
+        <span className="mub-card-title">
+          <CardIcon icon={<FolderOutlined />} color="#faad14" />
           <span>文件管理</span>
         </span>
       }
@@ -220,15 +210,13 @@ export default function FileManager() {
         dataSource={files}
         rowKey="path"
         loading={loading}
-        pagination={{ pageSize: 20, showTotal: (t) => `共 ${t} 项` }}
+        pagination={{ pageSize: 10, showTotal: (t) => `共 ${t} 项`, showSizeChanger: true, pageSizeOptions: ['10', '20', '50'] }}
         locale={{
           emptyText: (
             <Empty
               description={<span>
                 此目录为空<br />
-                <span style={{ color: 'var(--mub-text-muted)', fontSize: 12 }}>
-                  点击上方按钮创建文件或文件夹
-                </span>
+                <span className="mub-empty-hint">点击上方按钮创建文件或文件夹</span>
               </span>}
             />
           ),

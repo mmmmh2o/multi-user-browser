@@ -7,6 +7,7 @@ import {
   PlusOutlined, EditOutlined, DeleteOutlined, CodeOutlined,
 } from '@ant-design/icons';
 import { safeCall } from '../utils/ipcHelper';
+import CardIcon from '../components/CardIcon';
 
 export default function ScriptManager() {
   const [scripts, setScripts] = useState([]);
@@ -115,15 +116,8 @@ export default function ScriptManager() {
   return (
     <Card
       title={
-        <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{
-            width: 32, height: 32, borderRadius: 8,
-            background: '#2f54eb18', color: '#2f54eb',
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 15,
-          }}>
-            <CodeOutlined />
-          </span>
+        <span className="mub-card-title">
+          <CardIcon icon={<CodeOutlined />} color="#2f54eb" />
           <span>脚本管理</span>
         </span>
       }
@@ -140,15 +134,13 @@ export default function ScriptManager() {
         dataSource={scripts}
         rowKey="id"
         loading={loading}
-        pagination={{ pageSize: 10, showTotal: (t) => `共 ${t} 个脚本` }}
+        pagination={{ pageSize: 10, showTotal: (t) => `共 ${t} 条`, showSizeChanger: true, pageSizeOptions: ['10', '20', '50'] }}
         locale={{
           emptyText: (
             <Empty
               description={<span>
                 暂无脚本<br />
-                <span style={{ color: 'var(--mub-text-muted)', fontSize: 12 }}>
-                  添加 UserScript 增强浏览器功能
-                </span>
+                <span className="mub-empty-hint">添加 UserScript 增强浏览器功能</span>
               </span>}
             />
           ),
