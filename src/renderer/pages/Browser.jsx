@@ -141,10 +141,15 @@ export default function Browser() {
       const engineUrl = SEARCH_ENGINES[searchEngine] || SEARCH_ENGINES.google;
       url = `${engineUrl}${encodeURIComponent(url)}`;
     }
-    // 更新 tab 状态，React 会通过 src 属性驱动 webview 导航
+    // 更新 tab 状态
     setTabs((prev) => prev.map((t) => t.key === activeTabKey ? { ...t, url, isLoading: true } : t));
     setAddress(url);
-  }, [activeTabKey, searchEngine]);
+    // React 更新 src 属性不会触发 webview 导航，必须用 loadURL()
+    const wv = getActiveWebview();
+    if (wv) {
+      try { wv.loadURL(url); } catch (e) { console.error('[MUB] 导航失败:', e); }
+    }
+  }, [activeTabKey, searchEngine, getActiveWebview]);
 
   const handleGoBack = useCallback(() => { const wv = getActiveWebview(); if (wv?.canGoBack()) wv.goBack(); }, [getActiveWebview]);
   const handleGoForward = useCallback(() => { const wv = getActiveWebview(); if (wv?.canGoForward()) wv.goForward(); }, [getActiveWebview]);
