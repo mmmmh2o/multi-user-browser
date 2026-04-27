@@ -62,10 +62,12 @@ export default function Browser() {
 
     // 监听主进程发来的新窗口 URL → 在新标签页打开
     const handleOpenInTab = (url) => {
+      console.log('[MUB] 收到 open-url-in-tab IPC:', url);
       if (!url) return;
       addNewTab(url);
     };
     window.electronAPI?.onOpenUrlInTab?.(handleOpenInTab);
+    console.log('[MUB] onOpenUrlInTab listener registered:', !!window.electronAPI?.onOpenUrlInTab);
 
     return () => {
       window.removeEventListener('mub-navigate', handleNavigateEvent);
