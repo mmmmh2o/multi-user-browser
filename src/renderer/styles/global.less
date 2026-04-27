@@ -1,0 +1,248 @@
+/* ============================================
+   Multi-User Browser — Global Styles
+   ============================================ */
+
+/* ---------- Design Tokens ---------- */
+:root {
+  --mub-primary: #4f6ef7;
+  --mub-primary-light: #6b83fa;
+  --mub-primary-bg: #f0f3ff;
+  --mub-accent: #ff6b6b;
+  --mub-success: #52c41a;
+  --mub-warning: #faad14;
+  --mub-danger: #ff4d4f;
+
+  --mub-bg: #f5f6fa;
+  --mub-bg-card: #ffffff;
+  --mub-bg-sidebar: #1e2235;
+  --mub-bg-sidebar-hover: rgba(255,255,255,0.08);
+  --mub-bg-sidebar-active: rgba(79,110,247,0.25);
+  --mub-bg-header: #ffffff;
+  --mub-bg-table-header: #fafbfc;
+  --mub-bg-table-hover: #f7f8fc;
+
+  --mub-text: #1a1d2e;
+  --mub-text-secondary: #6b7280;
+  --mub-text-muted: #9ca3af;
+  --mub-text-sidebar: rgba(255,255,255,0.7);
+  --mub-text-sidebar-active: #ffffff;
+
+  --mub-border: #e5e7eb;
+  --mub-border-light: #f0f1f3;
+  --mub-shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --mub-shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --mub-shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  --mub-radius: 10px;
+  --mub-radius-sm: 6px;
+  --mub-radius-lg: 14px;
+  --mub-transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---------- Reset ---------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--mub-text);
+  background: var(--mub-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---------- Scrollbar ---------- */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* ---------- Selection ---------- */
+::selection {
+  background: var(--mub-primary);
+  color: #fff;
+}
+
+/* ---------- Ant Design Overrides ---------- */
+
+/* Card */
+.ant-card {
+  border-radius: var(--mub-radius) !important;
+  border: 1px solid var(--mub-border-light) !important;
+  box-shadow: var(--mub-shadow-sm) !important;
+  overflow: hidden;
+}
+.ant-card-head {
+  border-bottom: 1px solid var(--mub-border-light) !important;
+  padding: 16px 24px !important;
+  min-height: auto !important;
+}
+.ant-card-head-title {
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+.ant-card-extra {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+.ant-card-body {
+  padding: 20px 24px !important;
+}
+
+/* Table */
+.ant-table {
+  border-radius: var(--mub-radius-sm) !important;
+  overflow: hidden;
+}
+.ant-table-thead > tr > th {
+  background: var(--mub-bg-table-header) !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  color: var(--mub-text-secondary) !important;
+  border-bottom: 1px solid var(--mub-border) !important;
+  padding: 10px 16px !important;
+}
+.ant-table-tbody > tr > td {
+  padding: 10px 16px !important;
+  border-bottom: 1px solid var(--mub-border-light) !important;
+  transition: background var(--mub-transition);
+}
+.ant-table-tbody > tr:hover > td {
+  background: var(--mub-bg-table-hover) !important;
+}
+.ant-table-tbody > tr.ant-table-row-selected > td {
+  background: var(--mub-primary-bg) !important;
+}
+
+/* Button */
+.ant-btn-primary {
+  background: var(--mub-primary) !important;
+  border-color: var(--mub-primary) !important;
+  border-radius: var(--mub-radius-sm) !important;
+  font-weight: 500 !important;
+  box-shadow: 0 2px 4px rgba(79,110,247,0.3) !important;
+  transition: all var(--mub-transition) !important;
+}
+.ant-btn-primary:hover {
+  background: var(--mub-primary-light) !important;
+  border-color: var(--mub-primary-light) !important;
+  box-shadow: 0 4px 8px rgba(79,110,247,0.35) !important;
+  transform: translateY(-1px);
+}
+.ant-btn-default {
+  border-radius: var(--mub-radius-sm) !important;
+  border-color: var(--mub-border) !important;
+}
+.ant-btn-text {
+  border-radius: var(--mub-radius-sm) !important;
+}
+.ant-btn-text:hover {
+  background: var(--mub-bg-table-hover) !important;
+}
+
+/* Input */
+.ant-input,
+.ant-input-affix-wrapper {
+  border-radius: var(--mub-radius-sm) !important;
+  transition: all var(--mub-transition) !important;
+}
+.ant-input:focus,
+.ant-input-affix-wrapper-focused {
+  box-shadow: 0 0 0 3px rgba(79,110,247,0.12) !important;
+}
+
+/* Tag */
+.ant-tag {
+  border-radius: 20px !important;
+  font-size: 12px !important;
+  padding: 2px 10px !important;
+  line-height: 20px !important;
+}
+
+/* Modal */
+.ant-modal-content {
+  border-radius: var(--mub-radius-lg) !important;
+  box-shadow: var(--mub-shadow-lg) !important;
+}
+.ant-modal-header {
+  border-radius: var(--mub-radius-lg) var(--mub-radius-lg) 0 0 !important;
+}
+
+/* Switch */
+.ant-switch {
+  transition: all var(--mub-transition) !important;
+}
+
+/* Tabs (browser) */
+.ant-tabs-tab {
+  transition: all var(--mub-transition) !important;
+}
+
+/* Menu */
+.ant-menu-item {
+  border-radius: var(--mub-radius-sm) !important;
+  transition: all var(--mub-transition) !important;
+}
+
+/* Tooltip */
+.ant-tooltip-inner {
+  border-radius: var(--mub-radius-sm) !important;
+}
+
+/* ---------- Utility Classes ---------- */
+.mub-card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.mub-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.8);
+}
+
+/* ---------- Transitions ---------- */
+.fade-enter {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.fade-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.3s ease;
+}
