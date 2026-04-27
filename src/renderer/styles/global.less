@@ -107,12 +107,16 @@ body {
   border-radius: var(--mub-radius) !important;
   border: 1px solid var(--mub-border-light) !important;
   box-shadow: var(--mub-shadow-sm) !important;
-  overflow: hidden;
+  overflow: visible;
 }
 .ant-card-head {
   border-bottom: 1px solid var(--mub-border-light) !important;
   padding: 16px 24px !important;
   min-height: auto !important;
+  border-radius: var(--mub-radius) var(--mub-radius) 0 0 !important;
+}
+.ant-card-body {
+  border-radius: 0 0 var(--mub-radius) var(--mub-radius) !important;
 }
 .ant-card-head-title {
   font-size: 15px !important;
@@ -289,8 +293,12 @@ body {
 }
 
 /* ---------- Sidebar Dark Menu ---------- */
+.mub-sidebar {
+  z-index: 10;
+}
 .mub-sidebar .ant-menu-dark {
   background: transparent !important;
+  border: none !important;
 }
 .mub-sidebar .ant-menu-dark .ant-menu-item {
   color: rgba(255,255,255,0.65) !important;
@@ -299,7 +307,6 @@ body {
   height: 38px !important;
   line-height: 38px !important;
   padding-left: 12px !important;
-  transition: all var(--mub-transition) !important;
 }
 .mub-sidebar .ant-menu-dark .ant-menu-item:hover {
   color: #fff !important;
@@ -414,43 +421,9 @@ body {
   transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
-/* ---------- Layout Transition ---------- */
-.ant-layout-sider {
-  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-.ant-layout-sider .ant-layout-sider-children {
-  transition: opacity 0.25s ease !important;
-}
+/* ---------- Layout ---------- */
 .ant-layout {
-  transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-/* 侧边栏菜单项过渡 */
-.mub-sidebar .ant-menu-item {
-  transition: all 0.25s ease !important;
-}
-.mub-sidebar .ant-menu-item .ant-menu-item-icon {
-  transition: margin 0.3s ease, font-size 0.2s ease !important;
-}
-.mub-sidebar .ant-menu-item .ant-menu-item-icon + span {
-  transition: opacity 0.2s ease, width 0.3s ease !important;
-}
-.mub-sidebar .ant-menu-inline-collapsed .ant-menu-item .ant-menu-item-icon + span {
-  opacity: 0;
-  width: 0;
-  overflow: hidden;
-}
-.mub-sidebar .ant-menu-item-group-title {
-  transition: opacity 0.2s ease !important;
-}
-.mub-sidebar .ant-menu-inline-collapsed .ant-menu-item-group-title {
-  opacity: 0;
-  height: 0;
-  padding: 0 !important;
-  overflow: hidden;
-}
-.mub-sidebar .ant-divider {
-  transition: margin 0.3s ease !important;
+  transition: none !important;
 }
 
 /* ---------- Transitions ---------- */

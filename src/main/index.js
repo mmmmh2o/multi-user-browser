@@ -14,9 +14,10 @@ app.commandLine.appendSwitch('disable-software-rasterizer');
 app.commandLine.appendSwitch('disable-site-isolation-trials');
 // 允许 webview 安全降级
 app.commandLine.appendSwitch('allow-insecure-localhost');
-// 启用详细日志
-app.commandLine.appendSwitch('enable-logging');
-app.commandLine.appendSwitch('v', '0');
+// 禁用 Chromium 控制台日志（Windows 下会弹出终端窗口）
+// 使用 electron-log 记录日志即可
+// app.commandLine.appendSwitch('enable-logging');
+// app.commandLine.appendSwitch('v', '0');
 
 // 配置日志
 try {

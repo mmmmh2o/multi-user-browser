@@ -1,26 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Layout, Menu } from 'antd';
+import {
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+} from '@ant-design/icons';
 import NotificationBell from '../components/NotificationBell';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { menuItems, findMenuLabel } from '../config/menu';
 
+const SIDEBAR_WIDE = 220;
+const SIDEBAR_NARROW = 56;
+
 /* ─── Logo 区域 ─── */
-function SidebarLogo({ compact }) {
+function SidebarLogo({ wide }) {
   return (
     <div
-      className="mub-sidebar-logo"
       style={{
         height: 64,
         display: 'flex',
         alignItems: 'center',
-        justifyContent: compact ? 'center' : 'flex-start',
-        gap: 10,
-        padding: compact ? '0' : '0 20px',
+        justifyContent: 'center',
+        gap: wide ? 10 : 0,
+        padding: '0 12px',
         borderBottom: '1px solid rgba(255,255,255,0.08)',
-        cursor: 'pointer',
         flexShrink: 0,
-        transition: 'padding 0.3s ease, justify-content 0.3s ease',
+        overflow: 'hidden',
       }}
     >
       <div style={{
@@ -34,18 +39,17 @@ function SidebarLogo({ compact }) {
         fontSize: 16,
         flexShrink: 0,
         boxShadow: '0 2px 8px rgba(79,110,247,0.4)',
-        transition: 'transform 0.3s ease',
       }}>
         🌐
       </div>
       <div
-        className="mub-sidebar-logo-text"
         style={{
           overflow: 'hidden',
-          opacity: compact ? 0 : 1,
-          width: compact ? 0 : 'auto',
-          transition: 'opacity 0.25s ease, width 0.3s ease',
+          opacity: wide ? 1 : 0,
+          width: wide ? 'auto' : 0,
           whiteSpace: 'nowrap',
+          transition: 'opacity 0.2s ease, width 0.25s ease',
+          flexShrink: 0,
         }}
       >
         <div style={{
@@ -69,22 +73,73 @@ function SidebarLogo({ compact }) {
   );
 }
 
-/* ─── 侧边栏菜单 ─── */
-function SidebarMenu({ navigate, pathname, collapsed }) {
+/* ─── 收缩态菜单（只显示图标） ─── */
+function SidebarMenuCompact({ navigate, pathname }) {
+  const flatItems = menuItems
+    .filter(i => !i.type)
+    .flatMap(i => i.children || [i]);
+
   return (
-    <Menu
-      mode="inline"
-      selectedKeys={[pathname]}
-      items={menuItems}
-      onClick={({ key }) => navigate(key)}
+    <div style={{ padding: '8px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, flex: 1 }}>
+      {flatItems.map((item) => {
+        const isActive = pathname === item.key;
+        return (
+          <div
+            key={item.key}
+            onClick={() => navigate(item.key)}
+            style={{
+              width: 40,
+              height: 38,
+              borderRadius: 'var(--mub-radius-sm)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: isActive ? '#fff' : 'rgba(255,255,255,0.65)',
+              background: isActive
+                ? 'linear-gradient(90deg, rgba(79,110,247,0.35) 0%, rgba(79,110,247,0.15) 100%)'
+                : 'transparent',
+              boxShadow: isActive ? 'inset 3px 0 0 0 var(--mub-primary)' : 'none',
+              fontSize: 15,
+              transition: 'background 0.2s ease, color 0.2s ease',
+            }}
+            title={item.label}
+          >
+            {item.icon}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ─── 侧边栏底部：展开/收缩按钮 ─── */
+function SidebarToggle({ collapsed, onToggle }) {
+  return (
+    <div
+      onClick={onToggle}
       style={{
-        background: 'transparent',
-        border: 'none',
-        padding: 'var(--mub-space-sm)',
+        height: 44,
+        flexShrink: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        color: 'rgba(255,255,255,0.4)',
+        borderTop: '1px solid rgba(255,255,255,0.06)',
+        transition: 'color 0.2s ease, background 0.2s ease',
       }}
-      theme="dark"
-      inlineCollapsed={collapsed}
-    />
+      onMouseEnter={(e) => {
+        e.currentTarget.style.color = 'rgba(255,255,255,0.8)';
+        e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.color = 'rgba(255,255,255,0.4)';
+        e.currentTarget.style.background = 'transparent';
+      }}
+    >
+      {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+    </div>
   );
 }
 
@@ -93,49 +148,67 @@ export default function MainLayout() {
   const location = useLocation();
   const isBrowserPage = location.pathname === '/browser';
 
-  // 内容过渡状态
+  // 侧边栏收缩状态（浏览器页强制收缩，其他页由用户控制）
+  const [userCollapsed, setUserCollapsed] = useState(false);
+  const collapsed = isBrowserPage || userCollapsed;
+
+  // 内容过渡
   const [contentVisible, setContentVisible] = useState(true);
   const [headerVisible, setHeaderVisible] = useState(!isBrowserPage);
 
+  const sidebarWidth = collapsed ? SIDEBAR_NARROW : SIDEBAR_WIDE;
+
+  // 路由切换时的内容过渡
   useEffect(() => {
-    // 路由切换：淡出
     setContentVisible(false);
-
-    const timer = setTimeout(() => {
+    const t = setTimeout(() => {
       setHeaderVisible(!isBrowserPage);
-      // 淡入
-      requestAnimationFrame(() => setContentVisible(true));
-    }, 180);
-
-    return () => clearTimeout(timer);
+      setContentVisible(true);
+    }, 250);
+    return () => clearTimeout(t);
   }, [location.pathname]);
 
+  const handleToggle = () => {
+    if (isBrowserPage) return; // 浏览器页不允许手动展开
+    setUserCollapsed(v => !v);
+  };
+
   return (
-    <Layout style={{ minHeight: '100vh' }}>
-      {/* ─── 统一的深色侧边栏 ─── */}
-      <Layout.Sider
-        width={isBrowserPage ? 56 : 220}
-        collapsedWidth={56}
-        collapsed={isBrowserPage}
+    <Layout style={{ height: '100vh', overflow: 'hidden' }}>
+      {/* ─── 侧边栏 ─── */}
+      <div
         className="mub-sidebar"
         style={{
+          width: sidebarWidth,
+          minWidth: sidebarWidth,
+          maxWidth: sidebarWidth,
+          height: '100%',
           background: 'linear-gradient(180deg, #1a1f36 0%, #1e2235 100%)',
-          borderRight: 'none',
           boxShadow: '2px 0 16px rgba(0,0,0,0.12)',
           overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
-        <SidebarLogo compact={isBrowserPage} />
-        <SidebarMenu
-          navigate={navigate}
-          pathname={location.pathname}
-          collapsed={isBrowserPage}
-        />
-      </Layout.Sider>
+        <SidebarLogo wide={!collapsed} />
+        {!collapsed
+          ? <Menu
+              mode="inline"
+              selectedKeys={[location.pathname]}
+              items={menuItems}
+              onClick={({ key }) => navigate(key)}
+              style={{ background: 'transparent', border: 'none', padding: 'var(--mub-space-sm)', flex: 1 }}
+              theme="dark"
+            />
+          : <SidebarMenuCompact navigate={navigate} pathname={location.pathname} />
+        }
+        <SidebarToggle collapsed={collapsed} onToggle={handleToggle} />
+      </div>
 
       {/* ─── 主内容区 ─── */}
-      <Layout>
-        {/* Header：带滑入动画 */}
+      <Layout style={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* Header */}
         <div
           style={{
             height: headerVisible ? 56 : 0,
@@ -152,7 +225,7 @@ export default function MainLayout() {
           </Layout.Header>
         </div>
 
-        {/* 内容区：淡入 + 微上移 */}
+        {/* 内容区 */}
         <Layout.Content
           style={{
             padding: isBrowserPage ? 0 : 'var(--mub-space-lg)',
