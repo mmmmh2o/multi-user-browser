@@ -1,23 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Layout, Menu, Drawer, Button, Tooltip } from 'antd';
-import { MenuOutlined } from '@ant-design/icons';
+import { Layout, Menu, Tooltip } from 'antd';
 import NotificationBell from '../components/NotificationBell';
 import ErrorBoundary from '../components/ErrorBoundary';
-import RouteTransition from '../components/RouteTransition';
 import { menuItems, findMenuLabel } from '../config/menu';
-
-const SIDEBAR_STYLE = {
-  background: 'linear-gradient(180deg, #1a1f36 0%, #1e2235 100%)',
-  borderRight: 'none',
-  boxShadow: '4px 0 24px rgba(0,0,0,0.15)',
-};
 
 /* ─── Logo 区域 ─── */
 function SidebarLogo({ compact }) {
   return (
     <div style={{
-      height: compact ? 56 : 64,
+      height: compact ? 48 : 64,
       display: 'flex',
       alignItems: 'center',
       justifyContent: compact ? 'center' : 'flex-start',
@@ -66,16 +58,13 @@ function SidebarLogo({ compact }) {
 }
 
 /* ─── 侧边栏菜单 ─── */
-function SidebarMenu({ navigate, pathname, mode, onClose }) {
+function SidebarMenu({ navigate, pathname }) {
   return (
     <Menu
-      mode={mode || 'inline'}
+      mode="inline"
       selectedKeys={[pathname]}
       items={menuItems}
-      onClick={({ key }) => {
-        navigate(key);
-        onClose?.();
-      }}
+      onClick={({ key }) => navigate(key)}
       style={{
         background: 'transparent',
         border: 'none',
@@ -86,121 +75,54 @@ function SidebarMenu({ navigate, pathname, mode, onClose }) {
   );
 }
 
-/* ─── 浮动操作按钮（浏览器页面用） ─── */
-function BrowserFloatingButtons({ onOpenMenu }) {
-  return (
-    <>
-      <Tooltip title="菜单" placement="right">
-        <Button
-          icon={<MenuOutlined />}
-          shape="circle"
-          size="large"
-          onClick={onOpenMenu}
-          className="mub-float-btn"
-        />
-      </Tooltip>
-      <div className="mub-float-btn mub-float-btn--right">
-        <NotificationBell darkMode />
-      </div>
-    </>
-  );
-}
-
 export default function MainLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [transitioning, setTransitioning] = useState(false);
-
   const isBrowserPage = location.pathname === '/browser';
 
-  // 路由切换时触发过渡动画
-  useEffect(() => {
-    setTransitioning(true);
-    const timer = setTimeout(() => setTransitioning(false), 200);
-    return () => clearTimeout(timer);
-  }, [location.pathname]);
+  return (
+    <Layout style={{ minHeight: '100vh' }}>
+      {/* ─── 统一的深色侧边栏 ─── */}
+      <Layout.Sider
+        width={isBrowserPage ? 56 : 220}
+        collapsedWidth={56}
+        collapsed={isBrowserPage}
+        className="mub-sidebar"
+        style={{
+          background: 'linear-gradient(180deg, #1a1f36 0%, #1e2235 100%)',
+          borderRight: 'none',
+          boxShadow: '2px 0 16px rgba(0,0,0,0.12)',
+          transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          overflow: 'hidden',
+        }}
+      >
+        <SidebarLogo compact={isBrowserPage} />
+        <SidebarMenu navigate={navigate} pathname={location.pathname} />
+      </Layout.Sider>
 
-  /* ─── 浏览器页面：全屏 + 浮动入口 ─── */
-  if (isBrowserPage) {
-    return (
-      <div style={{ height: '100vh', position: 'relative' }}>
-        <BrowserFloatingButtons onOpenMenu={() => setDrawerOpen(true)} />
+      {/* ─── 主内容区 ─── */}
+      <Layout style={{ transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}>
+        {/* 管理页面：显示 Header；浏览器页面：隐藏 */}
+        {!isBrowserPage && (
+          <Layout.Header className="mub-page-header">
+            <h2 className="mub-page-title">
+              {findMenuLabel(location.pathname)}
+            </h2>
+            <NotificationBell />
+          </Layout.Header>
+        )}
 
-        <Drawer
-          placement="left"
-          open={drawerOpen}
-          onClose={() => setDrawerOpen(false)}
-          width={240}
-          styles={{
-            body: { padding: 0, background: '#1e2235' },
-            header: { background: '#1e2235', borderBottom: '1px solid rgba(255,255,255,0.08)' },
-          }}
-          title={
-            <span style={{ fontWeight: 700, color: '#fff', fontSize: 14 }}>
-              🌐 Multi-User Browser
-            </span>
-          }
-          className="mub-sidebar"
-        >
-          <SidebarMenu
-            navigate={navigate}
-            pathname={location.pathname}
-            onClose={() => setDrawerOpen(false)}
-          />
-        </Drawer>
-
-        <div
+        <Layout.Content
           style={{
-            opacity: transitioning ? 0 : 1,
-            transition: 'opacity 0.2s ease',
-            height: '100%',
+            padding: isBrowserPage ? 0 : 'var(--mub-space-lg)',
+            background: isBrowserPage ? '#fff' : 'var(--mub-bg)',
+            overflow: 'auto',
+            flex: 1,
           }}
         >
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>
-        </div>
-      </div>
-    );
-  }
-
-  /* ─── 管理页面：深色侧边栏 + 主区域 ─── */
-  return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Layout.Sider
-        width={220}
-        style={SIDEBAR_STYLE}
-        className="mub-sidebar"
-      >
-        <SidebarLogo />
-        <SidebarMenu
-          navigate={navigate}
-          pathname={location.pathname}
-        />
-      </Layout.Sider>
-
-      <Layout>
-        {/* Header：深色底边框过渡，不再是纯白 */}
-        <Layout.Header className="mub-page-header">
-          <h2 className="mub-page-title">
-            {findMenuLabel(location.pathname)}
-          </h2>
-          <NotificationBell />
-        </Layout.Header>
-
-        <Layout.Content className="mub-page-content">
-          <div
-            style={{
-              opacity: transitioning ? 0 : 1,
-              transform: transitioning ? 'translateY(4px)' : 'translateY(0)',
-              transition: 'opacity 0.2s ease, transform 0.2s ease',
-            }}
-          >
-            <ErrorBoundary>
-              <Outlet />
-            </ErrorBoundary>
-          </div>
         </Layout.Content>
       </Layout>
     </Layout>
