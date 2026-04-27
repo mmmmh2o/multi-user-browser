@@ -252,7 +252,6 @@ export default function ContainerManager() {
             <span>身份容器</span>
           </span>
         }
-        }
         extra={
           <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
             新建容器
