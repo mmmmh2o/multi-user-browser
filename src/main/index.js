@@ -42,8 +42,6 @@ function interceptDownloadsOnSession(session, partition) {
   registeredSessions.add(partition);
 
   session.on('will-download', (event, item, _webContents) => {
-    event.preventDefault();
-
     const url = item.getURL();
     const filename = item.getFilename();
 
@@ -56,37 +54,53 @@ function interceptDownloadsOnSession(session, partition) {
     // 获取主窗口 webContents 用于推送进度
     const targetWC = mainWindow && !mainWindow.isDestroyed() ? mainWindow.webContents : null;
 
+    // 先不阻止原生下载，异步尝试 aria2
+    // 如果 aria2 可用，再取消原生下载并转交 aria2
+    let nativeDownloadStarted = false;
+    let nativeSavePath = null;
+
+    // 原生下载进度监听（作为 fallback）
+    item.on('updated', () => {
+      if (!nativeDownloadStarted) {
+        nativeDownloadStarted = true;
+        log.info(`[原生下载] 已开始: ${filename}`);
+      }
+      if (targetWC && !targetWC.isDestroyed()) {
+        targetWC.send('download-progress-native', {
+          filename,
+          receivedBytes: item.getReceivedBytes(),
+          totalBytes: item.getTotalBytes(),
+        });
+      }
+    });
+    item.on('done', (e, state) => {
+      log.info(`[原生下载] ${filename}: ${state}`);
+      if (targetWC && !targetWC.isDestroyed()) {
+        targetWC.send('download-completed-native', { filename, state });
+      }
+    });
+
+    // 异步尝试 aria2
     addBrowserDownload(url, filename, item.getTotalBytes(), targetWC)
       .then((task) => {
-        // 通知渲染进程有新下载（DownloadManager 页面会监听此事件）
+        // aria2 成功 → 取消原生下载
+        if (!nativeDownloadStarted) {
+          item.cancel();
+          log.info(`[下载拦截] 已取消原生下载，转交 aria2: ${filename}`);
+        } else {
+          log.warn(`[下载拦截] 原生下载已在进行中，无法转交 aria2: ${filename}`);
+        }
         if (targetWC) {
           targetWC.send('download-started', task);
         }
       })
       .catch((err) => {
-        log.error(`[下载拦截] aria2 失败，回退原生下载: ${err.message}`);
-
-        // aria2 不可用时 fallback 到 Electron 原生下载
+        // aria2 失败 → 原生下载继续（已自动开始）
+        log.error(`[下载拦截] aria2 不可用 (${err.message})，使用原生下载: ${filename}`);
         if (targetWC) {
-          dialog.showSaveDialog(mainWindow, {
-            defaultPath: filename,
-            title: '保存文件',
-          }).then((result) => {
-            if (!result.canceled && result.filePath) {
-              item.setSavePath(result.filePath);
-              item.on('updated', () => {
-                if (targetWC && !targetWC.isDestroyed()) {
-                  targetWC.send('download-progress-native', {
-                    filename,
-                    receivedBytes: item.getReceivedBytes(),
-                    totalBytes: item.getTotalBytes(),
-                  });
-                }
-              });
-              item.on('done', (e, state) => {
-                log.info(`[原生下载] ${filename}: ${state}`);
-              });
-            }
+          targetWC.send('notification', {
+            type: 'warning',
+            message: `下载引擎不可用，已使用浏览器原生下载: ${filename}`,
           });
         }
       });
