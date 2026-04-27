@@ -1,0 +1,214 @@
+/* ============================================
+   Multi-User Browser — Download Manager Styles
+   ============================================ */
+
+/* ---------- 顶部仪表盘 ---------- */
+.mub-download-dashboard {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* ---------- 速度指示条 ---------- */
+.mub-speed-bar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 10px 16px;
+  background: var(--mub-bg);
+  border-radius: 10px;
+  border: 1px solid var(--mub-border-light);
+  transition: all 0.3s ease;
+}
+
+.mub-speed-bar--active {
+  background: linear-gradient(135deg, #f0f9ff 0%, #f0fff4 100%);
+  border-color: rgba(183, 235, 143, 0.1);
+}
+
+[data-theme='dark'] .mub-speed-bar--active {
+  background: linear-gradient(135deg, rgba(22, 119, 255, 0.08) 0%, rgba(82, 196, 26, 0.08) 100%);
+}
+
+.mub-speed-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mub-speed-item__icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.mub-speed-item__icon--download {
+  background: var(--mub-bg);
+}
+
+.mub-speed-item__icon--download-active {
+  background: rgba(22, 119, 255, 0.1);
+}
+
+.mub-speed-item__icon--upload {
+  background: var(--mub-bg);
+}
+
+.mub-speed-item__icon--upload-active {
+  background: rgba(82, 196, 26, 0.1);
+}
+
+.mub-speed-item__label {
+  font-size: 10px;
+  color: var(--mub-text-muted);
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.mub-speed-item__value {
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', Menlo, monospace;
+  transition: color 0.3s ease;
+}
+
+.mub-speed-item__value--download {
+  color: var(--mub-text-muted);
+}
+
+.mub-speed-item__value--download-active {
+  color: var(--mub-info);
+}
+
+.mub-speed-item__value--upload {
+  color: var(--mub-text-muted);
+}
+
+.mub-speed-item__value--upload-active {
+  color: var(--mub-success);
+}
+
+.mub-speed-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--mub-border-light);
+}
+
+/* ---------- 统计胶囊 ---------- */
+.mub-stats-pill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  background: var(--mub-bg);
+  border-radius: 10px;
+  border: 1px solid var(--mub-border-light);
+}
+
+.mub-stat {
+  text-align: center;
+}
+
+.mub-stat__value {
+  font-size: 18px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', Menlo, monospace;
+  line-height: 1;
+}
+
+.mub-stat__label {
+  font-size: 10px;
+  color: var(--mub-text-muted);
+  margin-top: 2px;
+}
+
+/* ---------- 文件图标 ---------- */
+.mub-file-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', Menlo, monospace;
+}
+
+/* ---------- 状态标签 ---------- */
+.mub-status-tag {
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+/* ---------- 速度显示 ---------- */
+.mub-speed-text {
+  font-size: 12px;
+  font-weight: 500;
+  font-family: 'JetBrains Mono', Menlo, monospace;
+}
+
+/* ---------- 活跃行 ---------- */
+.mub-row-active {
+  background: var(--mub-primary-bg) !important;
+}
+
+.mub-row-active:hover {
+  background: var(--mub-primary-bg) !important;
+}
+
+/* ---------- 空状态 ---------- */
+.mub-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  gap: 16px;
+}
+
+.mub-empty-state__icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #e6f4ff 0%, #f0f5ff 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+[data-theme='dark'] .mub-empty-state__icon {
+  background: linear-gradient(135deg, rgba(22, 119, 255, 0.15) 0%, rgba(22, 119, 255, 0.08) 100%);
+}
+
+.mub-empty-state__title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--mub-text);
+}
+
+.mub-empty-state__hint {
+  text-align: center;
+  max-width: 280px;
+  line-height: 1.6;
+  color: var(--mub-text-muted);
+  font-size: 12px;
+}
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 768px) {
+  .mub-download-dashboard {
+    flex-direction: column;
+  }
+
+  .mub-stats-pill {
+    justify-content: center;
+  }
+}

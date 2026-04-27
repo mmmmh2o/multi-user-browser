@@ -1,0 +1,133 @@
+/* ============================================
+   Multi-User Browser — Theme System
+   支持浅色/深色模式的 CSS 变量体系
+   ============================================ */
+
+/* ---------- 浅色主题（默认） ---------- */
+:root,
+[data-theme='light'] {
+  /* Primary */
+  --mub-primary: #4f6ef7;
+  --mub-primary-light: #6b83fa;
+  --mub-primary-hover: #3d5bd6;
+  --mub-primary-bg: #f0f3ff;
+  --mub-primary-shadow: rgba(79, 110, 247, 0.3);
+
+  /* Semantic */
+  --mub-accent: #ff6b6b;
+  --mub-success: #52c41a;
+  --mub-warning: #faad14;
+  --mub-danger: #ff4d4f;
+  --mub-info: #1677ff;
+
+  /* Background */
+  --mub-bg: #f5f6fa;
+  --mub-bg-card: #ffffff;
+  --mub-bg-elevated: #ffffff;
+  --mub-bg-sidebar: #1e2235;
+  --mub-bg-sidebar-hover: rgba(255, 255, 255, 0.08);
+  --mub-bg-sidebar-active: rgba(79, 110, 247, 0.25);
+  --mub-bg-header: #ffffff;
+  --mub-bg-table-header: #fafbfc;
+  --mub-bg-table-hover: #f7f8fc;
+  --mub-bg-input: #f5f6fa;
+  --mub-bg-mask: rgba(0, 0, 0, 0.45);
+
+  /* Text */
+  --mub-text: #1a1d2e;
+  --mub-text-secondary: #6b7280;
+  --mub-text-muted: #9ca3af;
+  --mub-text-inverse: #ffffff;
+  --mub-text-sidebar: rgba(255, 255, 255, 0.7);
+  --mub-text-sidebar-active: #ffffff;
+
+  /* Border */
+  --mub-border: #e5e7eb;
+  --mub-border-light: #f0f1f3;
+  --mub-border-focus: #4f6ef7;
+
+  /* Shadow */
+  --mub-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --mub-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --mub-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --mub-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --mub-shadow-dropdown: 0 6px 16px rgba(0, 0, 0, 0.08);
+
+  /* Sidebar */
+  --mub-sidebar-bg: linear-gradient(180deg, #1a1f36 0%, #1e2235 100%);
+  --mub-sidebar-width: 220px;
+  --mub-sidebar-collapsed-width: 64px;
+
+  /* Scrollbar */
+  --mub-scrollbar-thumb: #d1d5db;
+  --mub-scrollbar-thumb-hover: #9ca3af;
+
+  /* Browser */
+  --mub-browser-toolbar: #ffffff;
+  --mub-browser-tab-bar: var(--mub-bg-table-header);
+  --mub-browser-address-bar: var(--mub-bg-input);
+  --mub-newtab-gradient: linear-gradient(160deg, #f8f9fc 0%, #eef1f6 50%, #e8ecf4 100%);
+}
+
+/* ---------- 深色主题 ---------- */
+[data-theme='dark'] {
+  /* Primary */
+  --mub-primary: #6b83fa;
+  --mub-primary-light: #8b9dfc;
+  --mub-primary-hover: #5a72e8;
+  --mub-primary-bg: rgba(107, 131, 250, 0.12);
+  --mub-primary-shadow: rgba(107, 131, 250, 0.25);
+
+  /* Semantic */
+  --mub-accent: #ff7875;
+  --mub-success: #73d13d;
+  --mub-warning: #ffc53d;
+  --mub-danger: #ff7875;
+  --mub-info: #4096ff;
+
+  /* Background */
+  --mub-bg: #141416;
+  --mub-bg-card: #1e1e22;
+  --mub-bg-elevated: #26262b;
+  --mub-bg-sidebar: #18181b;
+  --mub-bg-sidebar-hover: rgba(255, 255, 255, 0.06);
+  --mub-bg-sidebar-active: rgba(107, 131, 250, 0.2);
+  --mub-bg-header: #1e1e22;
+  --mub-bg-table-header: #1a1a1e;
+  --mub-bg-table-hover: #26262b;
+  --mub-bg-input: #26262b;
+  --mub-bg-mask: rgba(0, 0, 0, 0.65);
+
+  /* Text */
+  --mub-text: #e4e4e7;
+  --mub-text-secondary: #a1a1aa;
+  --mub-text-muted: #71717a;
+  --mub-text-inverse: #18181b;
+  --mub-text-sidebar: rgba(255, 255, 255, 0.65);
+  --mub-text-sidebar-active: #ffffff;
+
+  /* Border */
+  --mub-border: #2e2e33;
+  --mub-border-light: #26262b;
+  --mub-border-focus: #6b83fa;
+
+  /* Shadow */
+  --mub-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --mub-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --mub-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --mub-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --mub-shadow-dropdown: 0 6px 16px rgba(0, 0, 0, 0.3);
+
+  /* Sidebar */
+  --mub-sidebar-bg: linear-gradient(180deg, #111113 0%, #18181b 100%);
+
+  /* Scrollbar */
+  --mub-scrollbar-thumb: #3f3f46;
+  --mub-scrollbar-thumb-hover: #52525b;
+
+  /* Browser */
+  --mub-browser-toolbar: #1e1e22;
+  --mub-browser-tab-bar: #1a1a1e;
+  --mub-browser-address-bar: #26262b;
+  --mub-newtab-gradient: linear-gradient(160deg, #1a1a1e 0%, #1e1e22 50%, #26262b 100%);
+}

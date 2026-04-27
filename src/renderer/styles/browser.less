@@ -1,0 +1,272 @@
+/* ============================================
+   Multi-User Browser — Browser Page Styles
+   浏览器页面专用样式
+   ============================================ */
+
+/* ---------- 标签栏 ---------- */
+.mub-tab-bar {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--mub-border-light);
+  background: var(--mub-browser-tab-bar);
+  min-height: 38px;
+  padding-left: 8px;
+}
+
+.mub-tab-bar .ant-tabs {
+  flex: 1;
+  margin-bottom: 0;
+  margin-left: 4px;
+}
+
+.mub-tab-bar .ant-tabs-tab {
+  font-size: 12.5px;
+}
+
+/* ---------- 导航栏 ---------- */
+.mub-nav-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--mub-border-light);
+  background: var(--mub-bg-card);
+}
+
+.mub-nav-buttons {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--mub-bg);
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.mub-nav-buttons .ant-btn {
+  border-radius: 6px;
+  width: 30px;
+  height: 30px;
+}
+
+/* ---------- 地址栏 ---------- */
+.mub-address-bar {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: var(--mub-browser-address-bar);
+  border-radius: 20px;
+  padding: 0 12px;
+  height: 34px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.mub-address-bar:focus-within {
+  border-color: var(--mub-border-focus);
+  box-shadow: 0 0 0 3px var(--mub-primary-bg);
+}
+
+.mub-address-bar__input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  color: var(--mub-text);
+  line-height: 32px;
+}
+
+.mub-address-bar__input::placeholder {
+  color: var(--mub-text-muted);
+}
+
+/* ---------- 容器选择器 ---------- */
+.mub-container-selector {
+  cursor: pointer;
+  margin: 0;
+  border-radius: 16px;
+  line-height: 22px;
+  padding: 1px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.mub-container-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+}
+
+/* ---------- Webview 容器 ---------- */
+.mub-webview-container {
+  flex: 1;
+  position: relative;
+  background: var(--mub-bg-card);
+}
+
+.mub-webview-wrapper {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+}
+
+.mub-webview-wrapper--hidden {
+  display: none;
+}
+
+/* ---------- 新标签页 ---------- */
+.mub-newtab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 36px;
+  background: var(--mub-newtab-gradient);
+  padding: 48px;
+}
+
+.mub-newtab__logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  margin: 0 auto 16px;
+  background: linear-gradient(135deg, #4f6ef7 0%, #7c5cfc 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  box-shadow: 0 8px 24px rgba(79, 110, 247, 0.3);
+}
+
+.mub-newtab__title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--mub-text);
+  letter-spacing: -0.5px;
+  text-align: center;
+}
+
+.mub-newtab__subtitle {
+  color: var(--mub-text-muted);
+  margin-top: 6px;
+  font-size: 13.5px;
+  text-align: center;
+}
+
+/* 搜索框 */
+.mub-newtab__search {
+  width: 100%;
+  max-width: 480px;
+  background: var(--mub-bg-card);
+  border-radius: 24px;
+  padding: 0 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--mub-border-light);
+  display: flex;
+  align-items: center;
+  height: 46px;
+  transition: all 0.2s ease;
+}
+
+.mub-newtab__search:focus-within {
+  border-color: var(--mub-border-focus);
+  box-shadow: 0 4px 16px var(--mub-primary-shadow);
+}
+
+.mub-newtab__search-icon {
+  font-size: 16px;
+  margin-right: 10px;
+  opacity: 0.4;
+}
+
+.mub-newtab__search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: var(--mub-text);
+  line-height: 44px;
+}
+
+.mub-newtab__search-input::placeholder {
+  color: var(--mub-text-muted);
+}
+
+/* 快捷链接 */
+.mub-quick-links {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  max-width: 480px;
+  width: 100%;
+}
+
+.mub-quick-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 16px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+}
+
+[data-theme='dark'] .mub-quick-link {
+  background: rgba(30, 30, 34, 0.8);
+  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.mub-quick-link:hover {
+  transform: translateY(-3px) scale(1.02);
+}
+
+.mub-quick-link__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.mub-quick-link__label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--mub-text);
+}
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 640px) {
+  .mub-nav-bar {
+    padding: 6px 10px;
+    gap: 6px;
+  }
+
+  .mub-newtab {
+    padding: 24px;
+    gap: 24px;
+  }
+
+  .mub-quick-links {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .mub-newtab__search {
+    max-width: 100%;
+  }
+}

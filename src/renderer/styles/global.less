@@ -1,0 +1,360 @@
+/* ============================================
+   Multi-User Browser — Global Styles
+   ============================================ */
+
+/* ---------- 导入主题和模块样式 ---------- */
+@import './theme.less';
+@import './layout.less';
+@import './browser.less';
+@import './download.less';
+
+/* ---------- Reset ---------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--mub-text);
+  background: var(--mub-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---------- Scrollbar ---------- */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--mub-scrollbar-thumb);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--mub-scrollbar-thumb-hover);
+}
+
+/* ---------- Selection ---------- */
+::selection {
+  background: var(--mub-primary);
+  color: #fff;
+}
+
+/* ---------- Ant Design Overrides ---------- */
+
+/* Card */
+.ant-card {
+  border-radius: var(--mub-radius) !important;
+  border: 1px solid var(--mub-border-light) !important;
+  box-shadow: var(--mub-shadow-card) !important;
+  overflow: hidden;
+  background: var(--mub-bg-card);
+}
+.ant-card-head {
+  border-bottom: 1px solid var(--mub-border-light) !important;
+  padding: 16px 24px !important;
+  min-height: auto !important;
+  background: var(--mub-bg-card);
+}
+.ant-card-head-title {
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  color: var(--mub-text);
+}
+.ant-card-extra {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+.ant-card-body {
+  padding: 20px 24px !important;
+}
+
+/* Table */
+.ant-table {
+  border-radius: var(--mub-radius-sm) !important;
+  overflow: hidden;
+  background: var(--mub-bg-card);
+}
+.ant-table-thead > tr > th {
+  background: var(--mub-bg-table-header) !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  color: var(--mub-text-secondary) !important;
+  border-bottom: 1px solid var(--mub-border) !important;
+  padding: 10px 16px !important;
+}
+.ant-table-tbody > tr > td {
+  padding: 10px 16px !important;
+  border-bottom: 1px solid var(--mub-border-light) !important;
+  transition: background var(--mub-transition);
+  color: var(--mub-text);
+}
+.ant-table-tbody > tr:hover > td {
+  background: var(--mub-bg-table-hover) !important;
+}
+.ant-table-tbody > tr.ant-table-row-selected > td {
+  background: var(--mub-primary-bg) !important;
+}
+
+/* Button */
+.ant-btn-primary {
+  background: var(--mub-primary) !important;
+  border-color: var(--mub-primary) !important;
+  border-radius: var(--mub-radius-sm) !important;
+  font-weight: 500 !important;
+  box-shadow: 0 2px 4px var(--mub-primary-shadow) !important;
+  transition: all var(--mub-transition) !important;
+}
+.ant-btn-primary:hover {
+  background: var(--mub-primary-light) !important;
+  border-color: var(--mub-primary-light) !important;
+  box-shadow: 0 4px 8px var(--mub-primary-shadow) !important;
+  transform: translateY(-1px);
+}
+.ant-btn-default {
+  border-radius: var(--mub-radius-sm) !important;
+  border-color: var(--mub-border) !important;
+  background: var(--mub-bg-card);
+  color: var(--mub-text);
+}
+.ant-btn-text {
+  border-radius: var(--mub-radius-sm) !important;
+  color: var(--mub-text-secondary);
+}
+.ant-btn-text:hover {
+  background: var(--mub-bg-table-hover) !important;
+}
+
+/* Input */
+.ant-input,
+.ant-input-affix-wrapper {
+  border-radius: var(--mub-radius-sm) !important;
+  transition: all var(--mub-transition) !important;
+  background: var(--mub-bg-card);
+  border-color: var(--mub-border);
+  color: var(--mub-text);
+}
+.ant-input:focus,
+.ant-input-affix-wrapper-focused {
+  box-shadow: 0 0 0 3px var(--mub-primary-bg) !important;
+  border-color: var(--mub-border-focus) !important;
+}
+.ant-input::placeholder {
+  color: var(--mub-text-muted);
+}
+
+/* Tag */
+.ant-tag {
+  border-radius: 20px !important;
+  font-size: 12px !important;
+  padding: 2px 10px !important;
+  line-height: 20px !important;
+}
+
+/* Modal */
+.ant-modal-content {
+  border-radius: var(--mub-radius-lg) !important;
+  box-shadow: var(--mub-shadow-lg) !important;
+  background: var(--mub-bg-card);
+}
+.ant-modal-header {
+  border-radius: var(--mub-radius-lg) var(--mub-radius-lg) 0 0 !important;
+  background: var(--mub-bg-card);
+}
+.ant-modal-title {
+  color: var(--mub-text);
+}
+.ant-modal-close {
+  color: var(--mub-text-secondary);
+}
+
+/* Switch */
+.ant-switch {
+  transition: all var(--mub-transition) !important;
+}
+
+/* Tabs */
+.ant-tabs-tab {
+  transition: all var(--mub-transition) !important;
+  color: var(--mub-text-secondary);
+}
+.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--mub-primary) !important;
+}
+
+/* Menu */
+.ant-menu-item {
+  border-radius: var(--mub-radius-sm) !important;
+  transition: all var(--mub-transition) !important;
+}
+
+/* Tooltip */
+.ant-tooltip-inner {
+  border-radius: var(--mub-radius-sm) !important;
+}
+
+/* Select */
+.ant-select-selector {
+  border-radius: var(--mub-radius-sm) !important;
+}
+
+/* Divider */
+.ant-divider-horizontal {
+  border-color: var(--mub-border-light);
+}
+.ant-divider-inner-text {
+  color: var(--mub-text-secondary);
+}
+
+/* Form */
+.ant-form-item-label > label {
+  color: var(--mub-text);
+}
+
+/* Empty */
+.ant-empty-description {
+  color: var(--mub-text-muted);
+}
+
+/* Drawer */
+.ant-drawer-content {
+  background: var(--mub-bg-card);
+}
+.ant-drawer-header {
+  background: var(--mub-bg-card);
+  border-bottom: 1px solid var(--mub-border-light);
+}
+.ant-drawer-title {
+  color: var(--mub-text);
+}
+
+/* Popconfirm */
+.ant-popconfirm-message-title {
+  color: var(--mub-text);
+}
+
+/* Pagination */
+.ant-pagination-item {
+  border-radius: var(--mub-radius-sm) !important;
+}
+.ant-pagination-item a {
+  color: var(--mub-text);
+}
+
+/* Message */
+.ant-message-notice-content {
+  border-radius: var(--mub-radius-sm) !important;
+  box-shadow: var(--mub-shadow-md) !important;
+  background: var(--mub-bg-card);
+  color: var(--mub-text);
+}
+
+/* ---------- Utility Classes ---------- */
+.mub-card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.mub-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+}
+
+/* ---------- Table Icon Cell ---------- */
+.mub-table-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--mub-bg-table-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.mub-table-icon--folder {
+  background: #fff7e6;
+}
+.mub-table-icon--folder .anticon {
+  color: #faad14;
+  font-size: 15px;
+}
+[data-theme='dark'] .mub-table-icon--folder {
+  background: rgba(250, 173, 20, 0.15);
+}
+.mub-table-icon .anticon {
+  color: var(--mub-text-muted);
+  font-size: 13px;
+}
+
+/* ---------- Card Title ---------- */
+.mub-card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ---------- Empty Hint ---------- */
+.mub-empty-hint {
+  color: var(--mub-text-muted);
+  font-size: 12px;
+}
+
+/* ---------- Transitions ---------- */
+.fade-enter {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.fade-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.3s ease;
+}
+
+/* ---------- 通用链接样式 ---------- */
+a {
+  color: var(--mub-primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+a:hover {
+  color: var(--mub-primary-light);
+}
+
+/* ---------- 代码块 ---------- */
+code {
+  font-size: 12px;
+  background: var(--mub-bg-table-hover);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--mub-text);
+  font-family: 'JetBrains Mono', Menlo, monospace;
+}
