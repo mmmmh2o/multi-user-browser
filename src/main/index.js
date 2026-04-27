@@ -5,19 +5,18 @@ const { registerAllHandlers } = require('./ipc');
 const { addBrowserDownload } = require('./ipc/downloadHandlers');
 
 // ========== GPU / 渲染稳定性修复 ==========
-// 禁用硬件加速，避免 GPU 驱动兼容问题导致页面崩溃
 app.disableHardwareAcceleration();
-// 禁用 GPU 合成，减少渲染进程崩溃
 app.commandLine.appendSwitch('disable-gpu-compositing');
-// 禁用 GPU 光栅化
-app.commandLine.appendSwitch('disable-gpu-rasterization');
-// 禁用 GPU sandbox（与 app sandbox 冲突时会崩溃）
+app.commandLine.appendSwitch('disable-gpu');
 app.commandLine.appendSwitch('no-sandbox');
-// 使用 SwiftShader 软件渲染作为 fallback
-app.commandLine.appendSwitch('use-gl', 'swiftshader');
-// 禁用 Chromium 的渲染器沙箱（webview 崩溃常见原因）
-app.commandLine.appendSwitch('disable-renderer-backgrounding');
-app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
+app.commandLine.appendSwitch('disable-software-rasterizer');
+// 禁用 site-per-process 隔离（减少 OOPIF 崩溃）
+app.commandLine.appendSwitch('disable-site-isolation-trials');
+// 允许 webview 安全降级
+app.commandLine.appendSwitch('allow-insecure-localhost');
+// 启用详细日志
+app.commandLine.appendSwitch('enable-logging');
+app.commandLine.appendSwitch('v', '0');
 
 // 配置日志
 try {
@@ -117,10 +116,11 @@ function createWindow() {
       preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      // sandbox 移除 — 与 webview sandbox=no 冲突会导致页面崩溃
-      webviewTag: true,
-      // 允许 webview 使用 Node API（preload 需要）
       sandbox: false,
+      webviewTag: true,
+      // 关键：允许 webview 跨域加载外部网站
+      webSecurity: true,
+      allowRunningInsecureContent: false,
     },
   });
 

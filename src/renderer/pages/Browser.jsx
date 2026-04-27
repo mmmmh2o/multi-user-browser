@@ -52,7 +52,6 @@ export default function Browser() {
           const updated = { ...prev[0], url, isLoading: true };
           setActiveTabKey(updated.key);
           setAddress(url);
-          setTimeout(() => { const wv = webviewRefs.current[updated.key]; if (wv) wv.loadURL(url); }, 0);
           return [updated];
         }
         setTimeout(() => addNewTab(url), 0);
@@ -113,15 +112,7 @@ export default function Browser() {
     setTabs((prev) => prev.map((t) =>
       t.key === tabKey ? { ...t, containerId, containerName: container.name, containerColor: container.color } : t
     ));
-    const wv = webviewRefs.current[tabKey];
-    if (wv) {
-      const tab = tabs.find((t) => t.key === tabKey);
-      if (tab && tab.url !== NEW_TAB_URL) {
-        delete webviewRefs.current[tabKey];
-        setTabs((prev) => prev.map((t) => t.key === tabKey ? { ...t, isLoading: true } : t));
-      }
-    }
-  }, [containers, tabs]);
+  }, [containers]);
 
   const getPartition = useCallback((containerId) =>
     containerId && containerId !== 'default' ? `persist:container-${containerId}` : 'persist:default', []);
@@ -139,11 +130,10 @@ export default function Browser() {
       const engineUrl = SEARCH_ENGINES[searchEngine] || SEARCH_ENGINES.google;
       url = `${engineUrl}${encodeURIComponent(url)}`;
     }
-    const wv = getActiveWebview();
-    if (wv) wv.loadURL(url);
+    // 更新 tab 状态，React 会通过 src 属性驱动 webview 导航
     setTabs((prev) => prev.map((t) => t.key === activeTabKey ? { ...t, url, isLoading: true } : t));
     setAddress(url);
-  }, [activeTabKey, getActiveWebview, searchEngine]);
+  }, [activeTabKey, searchEngine]);
 
   const handleGoBack = useCallback(() => { const wv = getActiveWebview(); if (wv?.canGoBack()) wv.goBack(); }, [getActiveWebview]);
   const handleGoForward = useCallback(() => { const wv = getActiveWebview(); if (wv?.canGoForward()) wv.goForward(); }, [getActiveWebview]);
@@ -163,16 +153,14 @@ export default function Browser() {
   const handleWebviewEvents = useCallback((key, webview) => {
     if (!webview) return;
 
-    // 立即注册窗口拦截，不等 dom-ready，防止链接弹出小窗口
-    try {
-      if (webview.setWindowOpenHandler) {
-        webview.setWindowOpenHandler(({ url }) => {
-          const parentTab = tabs.find((t) => t.key === key);
-          addNewTab(url, parentTab?.containerId || 'default');
-          return { action: 'deny' };
-        });
+    // 新窗口拦截 → 在新标签中打开
+    webview.addEventListener('new-window', (e) => {
+      e.preventDefault();
+      const parentTab = tabs.find((t) => t.key === key);
+      if (e.url && e.url !== 'about:blank') {
+        addNewTab(e.url, parentTab?.containerId || 'default');
       }
-    } catch {}
+    });
 
     webview.addEventListener('did-start-loading', () => setTabs((prev) => prev.map((t) => t.key === key ? { ...t, isLoading: true } : t)));
     webview.addEventListener('did-stop-loading', () => setTabs((prev) => prev.map((t) => t.key === key ? { ...t, isLoading: false } : t)));
@@ -231,7 +219,7 @@ export default function Browser() {
   const handleAddressKeyDown = useCallback((e) => {
     if (e.key === 'Enter') handleNavigate(address);
     if (e.key === 'Escape') { const tab = tabs.find((t) => t.key === activeTabKey); if (tab) setAddress(tab.url === NEW_TAB_URL ? '' : tab.url); }
-  }, [address, handleNavigate, tabs, activeTabKey]);
+  }, [address, handleNavigate, activeTabKey, tabs]);
 
   const getTabMenuItems = useCallback((key) => {
     const tab = tabs.find((t) => t.key === key);
@@ -410,23 +398,18 @@ export default function Browser() {
                     key={`${tab.key}-${tab.containerId}`}
                     ref={(el) => {
                       if (!el) return;
-                      // 如果已有旧 ref（preload 变化导致重渲染），先清理再重建
+                      // 清理旧 ref
                       if (webviewRefs.current[tab.key] && webviewRefs.current[tab.key] !== el) {
                         delete webviewRefs.current[tab.key];
                       }
                       if (!webviewRefs.current[tab.key]) {
                         handleWebviewEvents(tab.key, el);
-                        // 确保 webview 加载正确的 URL（React 对 webview src 处理不可靠）
-                        if (tab.url && tab.url !== NEW_TAB_URL && tab.url !== 'about:blank') {
-                          el.loadURL(tab.url).catch(() => {});
-                        }
                       }
                     }}
+                    src={tab.url}
                     partition={getPartition(tab.containerId)}
                     style={{ width: '100%', height: '100%', flex: 1 }}
                     preload={preloadReady ? `file://${window.__MUB_PRELOAD_PATH__}` : undefined}
-                    webpreferences="contextIsolation=yes,nodeIntegration=no,sandbox=no,spellcheck=no"
-                    allowpopups="true"
                   />
                 )
               }
