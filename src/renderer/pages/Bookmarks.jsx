@@ -41,7 +41,7 @@ export default function Bookmarks() {
   const filtered = bookmarks.filter(
     (b) =>
       (b.title || '').toLowerCase().includes(search.toLowerCase()) ||
-      (b.url || '').toLowerCase().includes(search.toLowerCase())
+      (b.url || '').toLowerCase().includes(search.toLowerCase()),
   );
 
   const columns = [

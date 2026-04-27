@@ -51,7 +51,7 @@ export default function History() {
   const filtered = history.filter(
     (h) =>
       (h.title || '').toLowerCase().includes(search.toLowerCase()) ||
-      (h.url || '').toLowerCase().includes(search.toLowerCase())
+      (h.url || '').toLowerCase().includes(search.toLowerCase()),
   );
 
   const columns = [

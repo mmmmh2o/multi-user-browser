@@ -110,7 +110,7 @@ export default function Browser() {
   const setTabContainer = useCallback((tabKey, containerId) => {
     const container = containers.find((c) => c.id === containerId) || { id: 'default', name: '默认', color: '#8c8c8c' };
     setTabs((prev) => prev.map((t) =>
-      t.key === tabKey ? { ...t, containerId, containerName: container.name, containerColor: container.color } : t
+      t.key === tabKey ? { ...t, containerId, containerName: container.name, containerColor: container.color } : t,
     ));
     const wv = webviewRefs.current[tabKey];
     if (wv) {

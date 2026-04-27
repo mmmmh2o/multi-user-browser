@@ -128,7 +128,7 @@ function SidebarMenu({ navigate, pathname, mode, onClose }) {
 /* ─── 响应式检测 Hook ─── */
 function useMediaQuery(query) {
   const [matches, setMatches] = useState(
-    () => window.matchMedia?.(query).matches ?? false
+    () => window.matchMedia?.(query).matches ?? false,
   );
   useEffect(() => {
     const mql = window.matchMedia(query);

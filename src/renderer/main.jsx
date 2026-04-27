@@ -46,7 +46,7 @@ function ThemedApp() {
         token: {
           colorPrimary: '#4f6ef7',
           borderRadius: 6,
-          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif",
+          fontFamily: '-apple-system, BlinkMacSystemFont, \'Segoe UI\', \'PingFang SC\', \'Hiragino Sans GB\', \'Microsoft YaHei\', \'Noto Sans SC\', sans-serif',
         },
         algorithm: darkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
       }}
@@ -61,5 +61,5 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <Provider store={store}>
       <ThemedApp />
     </Provider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

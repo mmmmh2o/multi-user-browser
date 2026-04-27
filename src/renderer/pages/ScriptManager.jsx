@@ -176,7 +176,7 @@ export default function ScriptManager() {
           <Form.Item name="code" label="脚本代码"
             rules={[{ required: true, message: '请输入脚本代码' }]}>
             <Input.TextArea
-              placeholder={`// ==UserScript==\n// @name     My Script\n// @match    https://example.com/*\n// ==/UserScript==\n\nconsole.log('Hello!');`}
+              placeholder={'// ==UserScript==\n// @name     My Script\n// @match    https://example.com/*\n// ==/UserScript==\n\nconsole.log(\'Hello!\');'}
               rows={12}
               style={{ fontFamily: 'monospace', fontSize: 13 }}
               aria-label="脚本代码"

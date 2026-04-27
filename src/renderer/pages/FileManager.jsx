@@ -49,13 +49,13 @@ export default function FileManager() {
     try {
       if (createType === 'folder') {
         await safeCall(() => window.electronAPI.createDirectory(
-          `${currentPath}/${newFolderName}`.replace('//', '/')
+          `${currentPath}/${newFolderName}`.replace('//', '/'),
         ));
         message.success('文件夹已创建');
       } else {
         await safeCall(() => window.electronAPI.createFile(
           `${currentPath}/${newFileName}`.replace('//', '/'),
-          newFileContent
+          newFileContent,
         ));
         message.success('文件已创建');
       }
